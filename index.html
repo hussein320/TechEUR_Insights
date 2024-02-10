@@ -11,27 +11,6 @@
   </head>
   <body>
     <script src="https://d3js.org/d3.v4.js"></script>
-    <!-- Navigation bar -->
-    <!-- <div class="navbar">
-      <img src="../logo/logowithback1.png" alt="Logo" class="navbar-logo" />
-      <div class="navbar-menu">
-        <a href="#home">Home</a>
-        <a href="#digitalization">Digitalization</a>
-        <a href="#factors">Factors</a>
-        <a href="#impact">Impact</a>
-        <a href="#improvements">Improvements</a>
-        <a href="#conclusion">Conclusion</a>
-      </div>
-    </div>
-    <div id="home" class="section">
-      <div id="animatedText" class="animated-text">
-        <span id="digit">Digitalization in Europe: </span>
-        <span id="factor" writeit-animate>Factors</span>
-        <span id="impacts">Impacts</span>
-        <span id="future">and Future!</span>
-      </div>
-    </div> -->
-
     <div class="navbar">
       <div class="logo">Tech-Eur Insights</div>
       <ul>
@@ -40,7 +19,6 @@
         <li><a href="#factors">Factors</a></li>
         <li><a href="#impact">Impact</a></li>
         <li><a href="#improvements">Improvements</a></li>
-        <li><a href="#conclusion">Conclusion</a></li>
       </ul>
     </div>
     <div class="home" id="home">
@@ -154,6 +132,7 @@
               <li>Destination Nodes are Hoverable</li>
             </ul>
           </div>
+
           <div id="sankey_plot" class="plot-container">
             <iframe
               id="sankey_plot_iframe"
@@ -185,6 +164,10 @@
               <li>
                 some countries will not be available for the selected year,
                 change the year if you are interested about this country
+              </li>
+              <li>
+                color gradient of the bar plot is propotional to the % value,
+                higher values tend to dark blue
               </li>
             </ul>
           </div>
