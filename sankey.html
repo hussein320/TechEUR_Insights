@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>EU Technology Flow Sankey Diagram</title>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3-sankey@0.12.3"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      .link {
+        fill: none;
+        stroke-opacity: 0.5;
+      }
+      .node rect {
+        fill-opacity: 0.9;
+        stroke: #fff;
+      }
+      .node rect.highlighted {
+        stroke: #fff;
+        stroke-width: 6px;
+        stroke-opacity: 1;
+        transition: all 0.3s ease-out;
+      }
+      .node text {
+        fill: #000;
+        font: 6px;
+        font-family: "Roboto";
+      }
+      .tooltip {
+        background: linear-gradient(
+          145deg,
+          rgba(255, 255, 255, 0.9),
+          rgba(230, 230, 250, 0.9)
+        );
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        color: #333;
+        display: none;
+        font-family: "Arial", sans-serif;
+        font-size: 14px;
+        left: 0;
+        padding: 8px 10px;
+        pointer-events: none;
+        position: absolute;
+        text-align: center;
+        top: 0;
+        width: auto;
+        min-width: 120px;
+        max-width: 200px;
+        border: 1px solid rgba(100, 100, 150, 0.2);
+        transition: all 0.3s ease;
+      }
+
+      .tooltip::after {
+        content: "";
+        position: absolute;
+        bottom: 100%; /* At the top of the tooltip */
+        left: 50%;
+        margin-left: -5px;
+        border-width: 5px;
+        border-style: solid;
+        border-color: transparent transparent rgba(255, 255, 255, 0.9)
+          transparent;
+        transition: all 0.3s ease;
+      }
+
+      .node:hover .tooltip {
+        display: block;
+      }
+      .node {
+        transition: stroke 0.3s ease, stroke-width 0.3s ease;
+      }
+
+      .node.hover-shadow {
+        animation: shadow-grow 0.5s forwards;
+      }
+      body,
+      html {
+        padding: 0;
+        margin: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="my_dataviz"></div>
+    <div class="tooltip"></div>
+
+    <script>
+      var margin = {
+          top: window.innerHeight * 0.05,
+          right: window.innerWidth * 0.05,
+          bottom: window.innerHeight * 0.05,
+          left: window.innerWidth * 0.05,
+        },
+        width = window.innerWidth * 0.75;
+      height = window.innerHeight * 0.6;
+
+      var svg = d3
+        .select("#my_dataviz")
+        .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .style("position", "absolute")
+        .style("top", "110px")
+        .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+      var colors = d3.scaleOrdinal(d3.schemeCategory10);
+
+      var tooltip = d3.select(".tooltip");
+
+      var data = {
+        nodes: [
+          { node: 0, name: "EU" },
+          { node: 1, name: "Big Data Analysis" },
+          { node: 2, name: "Cloud Computing" },
+          { node: 3, name: "3D Printing" },
+          { node: 4, name: "Internet of Things" },
+          { node: 5, name: "Artificial Intelligence" },
+        ],
+        links: [
+          { source: 0, target: 1, value: 10.3 },
+          { source: 0, target: 2, value: 16.3 },
+          { source: 0, target: 3, value: 18.2 },
+          { source: 0, target: 4, value: 30.6 },
+          { source: 0, target: 5, value: 7 },
+        ],
+      };
+
+      var total = d3.sum(data.links, function (d) {
+        return d.value;
+      });
+
+      var sankey = d3
+        .sankey()
+        .nodeWidth(36)
+        .nodePadding(40)
+        .size([width, height]);
+
+      sankey(data);
+
+      var link = svg
+        .append("g")
+        .selectAll(".link")
+        .data(data.links)
+        .enter()
+        .append("path")
+        .attr("class", "link")
+        .attr("d", d3.sankeyLinkHorizontal())
+        .style("stroke-width", function (d) {
+          return Math.max(1, d.width);
+        })
+        .style("stroke", function (d) {
+          return colors(d.target.name);
+        })
+        .on("mouseover", function (d) {
+          svg
+            .selectAll(".node rect")
+            .filter(function (nodeData) {
+              return nodeData.node === d.target.node;
+            })
+            .classed("highlighted", true);
+        })
+        .on("mouseout", function (d) {
+          svg
+            .selectAll(".node rect")
+            .filter(function (nodeData) {
+              return nodeData.node === d.target.node;
+            })
+            .classed("highlighted", false);
+        });
+
+      var node = svg
+        .append("g")
+        .selectAll(".node")
+        .data(data.nodes)
+        .enter()
+        .append("g")
+        .attr("class", "node")
+        .attr("transform", function (d) {
+          return "translate(" + d.x0 + "," + d.y0 + ")";
+        });
+
+      node
+        .append("rect")
+        .attr("height", function (d) {
+          return d.y1 - d.y0;
+        })
+        .attr("width", sankey.nodeWidth())
+        .classed("dest", function (d) {
+          return d.name !== "EU";
+        })
+        .style("fill", function (d) {
+          return colors(d.name);
+        })
+        .on("mouseover", function (d) {
+          // Check if the node is a target in any link before showing the tooltip
+          var targetLink = data.links.find((l) => l.target.name === d.name);
+          if (targetLink) {
+            tooltip.style("display", "block");
+            tooltip
+              .html(
+                d.name +
+                  "<br>" +
+                  ((targetLink.value / total) * 100).toFixed(2) +
+                  "%"
+              )
+              .style("left", d3.event.pageX + 10 + "px")
+              .style("top", d3.event.pageY + 10 + "px");
+          }
+        })
+        .on("mousemove", function () {
+          tooltip
+            .style("left", d3.event.pageX + 10 + "px")
+            .style("top", d3.event.pageY + 10 + "px");
+        })
+        .on("mouseout", function () {
+          tooltip.style("display", "none");
+        });
+
+      node
+        .append("text")
+        .attr("x", -6)
+        .attr("y", function (d) {
+          return (d.y1 - d.y0) / 2;
+        })
+        .style("font-family", "Roboto")
+        .attr("dy", "0.35em")
+        .attr("text-anchor", "end")
+        .text(function (d) {
+          return d.name;
+        })
+        .filter(function (d) {
+          return d.x0 < width / 2;
+        })
+        .attr("x", 6 + sankey.nodeWidth())
+        .attr("text-anchor", "start");
+    </script>
+  </body>
+</html>

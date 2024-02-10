@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" type="text/css" href="styles.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="./WriteIt.js-master/WriteIt.min.js"></script>
+    <script src="jquery-3.7.1.min.js"></script>
+  </head>
+  <body>
+    <script src="https://d3js.org/d3.v4.js"></script>
+    <!-- Navigation bar -->
+    <!-- <div class="navbar">
+      <img src="../logo/logowithback1.png" alt="Logo" class="navbar-logo" />
+      <div class="navbar-menu">
+        <a href="#home">Home</a>
+        <a href="#digitalization">Digitalization</a>
+        <a href="#factors">Factors</a>
+        <a href="#impact">Impact</a>
+        <a href="#improvements">Improvements</a>
+        <a href="#conclusion">Conclusion</a>
+      </div>
+    </div>
+    <div id="home" class="section">
+      <div id="animatedText" class="animated-text">
+        <span id="digit">Digitalization in Europe: </span>
+        <span id="factor" writeit-animate>Factors</span>
+        <span id="impacts">Impacts</span>
+        <span id="future">and Future!</span>
+      </div>
+    </div> -->
+
+    <div class="navbar">
+      <div class="logo">Tech-Eur Insights</div>
+      <ul>
+        <li><a href="#home">Home</a></li>
+        <li><a href="#digitalization">Digitalization</a></li>
+        <li><a href="#factors">Factors</a></li>
+        <li><a href="#impact">Impact</a></li>
+        <li><a href="#improvements">Improvements</a></li>
+        <li><a href="#conclusion">Conclusion</a></li>
+      </ul>
+    </div>
+    <div class="home" id="home">
+      <div class="homeRightContainer">
+        <div class="subContainer">
+          <div class="homeRightTopPar">
+            <span>Digitalization in</span><span>Europe:</span>
+          </div>
+          <div class="homeRightBottomPar">
+            <span>Factors,</span><span>Impacts,</span><span>and Future!</span>
+          </div>
+        </div>
+      </div>
+      <div class="homeLeftContainer"></div>
+    </div>
+    <div id="digitalization" class="digitalization">
+      <div class="digitalizationContaienr">
+        <div class="paraHeader">Introduction to Digitalization:</div>
+        <div class="paragraph">
+          At the forefront of Europe's quest for economic vitality and
+          innovation lies digitalization—the transformative force rewriting the
+          rules of engagement across all sectors. It's the pulse that quickens
+          beneath the surface of the market, driving integration, efficiency,
+          and growth. This section introduces the concept of digitalization not
+          just as a technological leap, but as a strategic evolution that
+          permeates every aspect of the Information and Communication Technology
+          (ICT) sector, shaping the future of work, education, and corporate
+          strategies.
+        </div>
+      </div>
+      <div class="digitalizationContaienr">
+        <div class="paraHeader">About the Digitalization :</div>
+        <div class="paragraph">
+          Our narrative begins by examining the factors that are pivotal in this
+          grand orchestration: the investments in technology, the literacy of
+          the workforce, and the innovations that disrupt the conventional
+          market tempo. We then measure the impacts, observing how the digital
+          wave lifts economies and redefines the labor market. Finally, we chart
+          out the suggestions for the future, a crescendo of ideas that aim to
+          harmonize the potential of digitalization with the needs of an
+          ever-evolving society. Through this trilogy of factors, impacts, and
+          future suggestions, we aspire to decode the complexity of Europe's
+          digital symphony and present actionable insights that can help direct
+          its course towards sustainable growth and widespread digital fluency.
+        </div>
+      </div>
+    </div>
+
+    <div id="factors" class="section1">
+      <!-- Section 1: Line Plot -->
+      <div id="factor_intro" class="SectionHeader">
+        Factors About the Digitalisation in Europe
+      </div>
+
+      <div class="newContainer">
+        <div class="subHeader">1. ICT % OF GDP across EUROPE:</div>
+        <div class="plotDescription">
+          To showcase the percentage contribution of the ICT sector to the Gross
+          Domestic Product (GDP) of various European countries. W can gauge
+          trough this lens the economic vitality of the ICT sector, comparing
+          its impact across nations. This analysis not only highlights the
+          countries leading in digital economic integration but also underscores
+          the disparity in digital development. It serves as a crucial indicator
+          of how deeply digitalization is woven into the fabric of each
+          country's economy, reflecting their investment in technology, digital
+          literacy levels, and the capacity for innovation. By examining this
+          metric, you gain insights into the scale of digital transformation and
+          its significance in driving economic growth and competitiveness on the
+          continent.
+        </div>
+        <div class="newPlotContainer">
+          <div class="newGuideContainer" id="guide1">
+            <div class="plotGuideHeader">Plot Guide</div>
+            <ul>
+              <li>You can select up to 5 countries</li>
+              <li>Legend items are hoverable</li>
+              <li>Dots on the plot are hoverable</li>
+            </ul>
+          </div>
+          <div id="line_plot" class="plot-container">
+            <iframe
+              id="line_plot_iframe"
+              src="linetr.html"
+              height="100%"
+              width="100%"
+              style="border: none"
+            ></iframe>
+          </div>
+        </div>
+      </div>
+      <div class="newContainer">
+        <div class="subHeader">2. % Distribution of ICT domains in europe</div>
+        <div class="plotDescription">
+          Now, let's explore another critical factor shaping the digital
+          landscape in Europe: the Distribution of ICT Domains. This aspect
+          provides a lens through which we can examine the technological
+          priorities, innovation trends, and sectors experiencing rapid growth
+          within Europe's digital economy. As we pivot towards the European
+          Union's (EU) strategic vision for 2020 and beyond, it becomes evident
+          that several ICT domains stand out as pivotal to the continent's
+          digital transformation efforts. These domains include Big Data
+          Analysis, Cloud Computing, 3D Printing, the Internet of Things (IoT),
+          and Artificial Intelligence (AI).
+        </div>
+        <div class="newPlotContainer">
+          <div class="newGuideContainer" id="guide2">
+            <div class="plotGuideHeader">Plot Guide</div>
+            <ul>
+              <li>The plot is for entire EU</li>
+              <li>This data is for 2020</li>
+              <li>Destination Nodes are Hoverable</li>
+            </ul>
+          </div>
+          <div id="sankey_plot" class="plot-container">
+            <iframe
+              id="sankey_plot_iframe"
+              src="sankey.html"
+              height="100%"
+              width="100%"
+              style="border: none"
+            ></iframe>
+          </div>
+        </div>
+      </div>
+      <div class="newContainer">
+        <div class="subHeader">3. ICT % OF Total employment</div>
+        <div class="plotDescription">
+          This metric offers a critical view into the labor market dynamics
+          within the ICT sector, highlighting its role as an employment driver
+          across the continent. The proportion of the workforce employed in
+          ICT-related jobs serves as a barometer for several key aspects of a
+          country's digital economy, including the demand for digital skills,
+          the level of technological integration in various industries, and the
+          overall health and innovation capacity of the ICT sector.
+        </div>
+        <div class="newPlotContainer">
+          <div class="newGuideContainer" id="guide3">
+            <div class="plotGuideHeader">Plot Guide</div>
+            <ul>
+              <li>You can choose one year at a time</li>
+              <li>You can choose up to 12 countries simultaneously</li>
+              <li>
+                some countries will not be available for the selected year,
+                change the year if you are interested about this country
+              </li>
+            </ul>
+          </div>
+          <div id="bar_plot" class="plot-container">
+            <iframe
+              id="bar_plot_iframe"
+              src="bartr.html"
+              height="100%"
+              width="110%"
+              style="border: none"
+            ></iframe>
+          </div>
+        </div>
+      </div>
+      <div class="newContainer">
+        <div class="subHeader">
+          4. European Business Demography Analysis: A Scatter Plot of Companies
+          Over Time
+        </div>
+        <div class="plotDescription">
+          For our fourth factor in understanding the digitalization landscape in
+          Europe, we turn our attention to the European Business Demography.
+          This analysis provides a longitudinal perspective on the business
+          ecosystem, focusing on the evolution in the number of companies in the
+          ICT sector. Observing how the number of companies has changed over
+          time can reveal much about the economic health, entrepreneurial
+          activity, and innovation trends within Europe. It's a reflection of
+          the business climate, indicating periods of growth, stability, or
+          decline, and offering insights into the broader impacts of digital
+          transformation on business creation and sustainability.
+        </div>
+        <div class="newPlotContainer">
+          <div class="newGuideContainer" id="guide4">
+            <div class="plotGuideHeader">Plot Guide</div>
+            <ul>
+              <li>You can choose 7 countries simultaneously</li>
+              <li>Dots on the plot are hoverable</li>
+              <li>Legend Text are hoverable and clickable</li>
+              <li>
+                On click on a country in legend will create a focus mode on this
+                country
+              </li>
+              <li>
+                Once you click on lgend item a "reset clicked to 0" button will
+                appear
+              </li>
+            </ul>
+          </div>
+          <div id="scatter_plot" class="plot-container">
+            <iframe
+              id="scatter_plot_iframe"
+              src="scatter.html"
+              height="100%"
+              width="120%"
+              style="border: none"
+            ></iframe>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="impact" class="section1">
+      <!-- Section 1: Line Plot -->
+      <div id="impact_intro" class="SectionHeader">Impacts on the ground</div>
+
+      <div class="newContainer">
+        <div class="subHeader">
+          1. Transforming Marketing: Enterprises Leveraging CRM Software for
+          Client Analysis.
+        </div>
+        <div class="plotDescription">
+          As we transition from examining the factors influencing digitalization
+          in Europe to exploring its tangible impacts on the ground, the first
+          area we delve into is Transforming Marketing. This impact highlights a
+          significant shift in how businesses approach marketing and customer
+          relationship management in the digital age.The adoption of Customer
+          Relationship Management (CRM) tools have enabled businesses to gather,
+          analyze, and utilize vast amounts of customer data to personalize
+          marketing efforts, improve customer service, and enhance customer
+          satisfaction and loyalty. This digital transformation in marketing has
+          allowed companies to tailor their products and services to meet the
+          specific needs and preferences of their clientele more effectively.
+        </div>
+        <div class="newPlotContainer">
+          <div class="newGuideContainer" id="guide5">
+            <div class="plotGuideHeader">Plot Guide</div>
+            <ul>
+              <li>Dots for each country are hoverable</li>
+              <li>EU represents Average for all European countries</li>
+              <li>
+                click on the arrows of the time traveler to go back back and
+                forth and see changes across years
+              </li>
+              <li>
+                years available are 2010, 2012, 2013, 2014, 2015, 2017, 2019 and
+                2021
+              </li>
+              <li>
+                On change of years countries and their values will be sorted
+              </li>
+            </ul>
+          </div>
+          <div id="lolli_plot" class="plot-container">
+            <iframe
+              id="lollipop_plot_iframe"
+              src="lollipop.html"
+              height="100%"
+              width="100%"
+              style="border: none"
+            ></iframe>
+          </div>
+        </div>
+      </div>
+
+      <div class="newContainer">
+        <div class="subHeader">2. % of Internet Usage Among Individuals</div>
+        <div class="plotDescription">
+          Moving to the second significant impact of digitalization on the
+          ground, we explore the Percentage of Internet Usage Among Individuals.
+          This metric is a cornerstone for understanding the digital engagement
+          of the population, reflecting the extent to which individuals across
+          Europe are accessing and utilizing the Internet in their daily lives.
+          The widespread use of the Internet has profound implications for
+          society, the economy, and the way individuals communicate, learn, and
+          access information.
+        </div>
+        <div class="newPlotContainer">
+          <div class="newGuideContainer" id="guide8">
+            <div class="plotGuideHeader">Plot Guide</div>
+            <ul>
+              <li>Each country & year box is hoverable</li>
+              <li>Orange color represents missing in the data</li>
+              <li>You can click up to 15 countries simultaneously</li>
+              <li>
+                The color scale of the legend adjusts according to the minimum
+                and maximum values of the selected countries. Each time you add
+                or remove a country, please review the legend for updates.
+              </li>
+            </ul>
+          </div>
+          <div id="heat_plot" class="plot-container">
+            <iframe
+              id="heatmap_plot_iframe"
+              src="heatmap.html"
+              height="100%"
+              width="100%"
+              style="border: none"
+            ></iframe>
+          </div>
+        </div>
+      </div>
+
+      <div class="newContainer">
+        <div class="subHeader">
+          3. Trust Deficit in Online Activities: A Map of Security-Driven
+          Internet Abstentions
+        </div>
+        <div class="plotDescription">
+          The third significant impact of digitalization that merits attention
+          is the Trust Deficit in Online Activities. This aspect delves into the
+          concerns and reservations individuals have about engaging in online
+          activities, primarily due to fears related to privacy, security, and
+          trustworthiness. The increasing reliance on the Internet for various
+          aspects of daily life underscores the importance of understanding the
+          nature and consequences of this trust deficit. Significantly
+          influencing digital engagement patterns, this trust deficit leads to a
+          phenomenon known as "Internet abstention," where individuals choose to
+          limit or avoid using the Internet for certain activities. In
+          addressing this issue, it's crucial to highlight that the values
+          represented in the map plot reflect the percentage of people
+          experiencing this problem, providing a visual representation of how
+          widespread these concerns are across EU.
+        </div>
+        <div class="newPlotContainer">
+          <div class="newGuideContainer">
+            <div id="guide7" class="plotGuideHeader">Plot Guide</div>
+            <ul>
+              <li>Each country on the map hoverable</li>
+              <li>
+                Gray color represents missing in the data for this country
+              </li>
+              <li>
+                click on the arrows of the time traveler to go back back and
+                forth and see changes across years
+              </li>
+              <li>Available Years are 2010, 2015 and 2019</li>
+              <li>Legend color scale is fixed for all years</li>
+            </ul>
+          </div>
+          <div id="map_plot" class="plot-container">
+            <iframe
+              id="mymap_plot_iframe"
+              src="mymap.html"
+              height="100%"
+              width="110%"
+              style="border: none"
+            ></iframe>
+          </div>
+        </div>
+      </div>
+
+      <div class="newContainer">
+        <div class="subHeader">
+          4. Gender Distribution of Employed ICT Specialists in the European
+          Union
+        </div>
+        <div class="plotDescription">
+          The fourth impact of digitalization to consider is the Gender
+          Distribution of Employed ICT Specialists in the European Union. This
+          facet shines a light on the representation and participation of
+          different genders within the ICT workforce, a critical component of
+          the digital economy. The percentage of men and women employed as ICT
+          specialists is not just a metric of employment but also an indicator
+          of inclusivity, diversity, and equality in the digital sector.
+        </div>
+        <div class="newPlotContainer">
+          <div class="newGuideContainer">
+            <div id="guide8" class="plotGuideHeader">Plot Guide</div>
+            <ul>
+              <li>you can select on country at a time</li>
+              <li>Pie parts are hoverable</li>
+              <li>
+                For each selected country you can travel through time and see
+                the changes Along the way
+              </li>
+              <li>Available Years are from 2014 to 2022 inclusive</li>
+            </ul>
+          </div>
+          <div id="pie_plot" class="plot-container">
+            <iframe
+              id="pie_plot_iframe"
+              src="pie.html"
+              height="100%"
+              width="100%"
+              style="border: none"
+            ></iframe>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- <div id="impact" class="section1">
+      <div id="impact_intro" class="centered">
+        <div class="icon-bg">
+          <img src="../logo/crpimg.png" alt="Monitoring Icon" class="icon" />
+        </div>
+        <h2>Impacts on the ground</h2>
+
+        <div id="Improvements_1" class="centered">
+          <p>
+            1. Transforming Marketing: Enterprises Leveraging CRM Software for
+            Client Analysis.
+          </p>
+        </div>
+      </div>
+      <div class="container">
+        <div id="guide5" class="guide-container">
+          <h2>Plot Guide</h2>
+          <ul>
+            <li>Dots for each country are hoverable</li>
+            <li>EU represents Average for all European countries</li>
+            <li>
+              click on the arrows of the time traveler to go back back and forth
+              and see changes across years
+            </li>
+            <li>
+              years available are 2010, 2012, 2013, 2014, 2015, 2017, 2019 and
+              2021
+            </li>
+            <li>
+              On change of years countries and their values will be sorted
+            </li>
+            <li>
+              if country dot is not plotted that means data for this country &
+              year is not available
+            </li>
+          </ul>
+        </div>
+        <div id="lolli_plot" class="plot-container">
+          <iframe
+            id="lollipop_plot_iframe"
+            src="lollipop.html"
+            height="100%"
+            width="100%"
+            style="border: none"
+          ></iframe>
+        </div>
+      </div>
+
+      <div id="Improvements_3" class="centered">
+        <p>2. % of Internet Usage Among Individuals</p>
+      </div>
+      <div class="container">
+        <div id="guide6" class="guide-container">
+          <h2>Plot Guide</h2>
+          <ul>
+            <li>Each country & year box is hoverable</li>
+            <li>Orange color represents missing in the data</li>
+            <li>You can click up to 15 countries simultaneously</li>
+            <li>
+              The color scale of the legend adjusts according to the minimum and
+              maximum values of the selected countries. Each time you add or
+              remove a country, please review the legend for updates.
+            </li>
+          </ul>
+        </div>
+        <div id="heat_plot" class="plot-container">
+          <iframe
+            id="heatmap_plot_iframe"
+            src="heatmap.html"
+            height="100%"
+            width="100%"
+            style="border: none"
+          ></iframe>
+        </div>
+      </div>
+      <div id="Improvements_2" class="centered">
+        <p>
+          3. Trust Deficit in Online Activities: A Map of Security-Driven
+          Internet Abstentions
+        </p>
+      </div>
+      <div class="container">
+        <div id="guide7" class="guide-container">
+          <h2>Plot Guide</h2>
+          <ul>
+            <li>Each country on the map hoverable</li>
+            <li>Gray color represents missing in the data for this country</li>
+            <li>
+              click on the arrows of the time traveler to go back back and forth
+              and see changes across years
+            </li>
+            <li>Available Years are 2010, 2015 and 2019</li>
+            <li>Legend color scale is fixed for all years</li>
+          </ul>
+        </div>
+        <div id="map_plot" class="plot-container">
+          <iframe
+            id="mymap_plot_iframe"
+            src="mymap.html"
+            height="100%"
+            width="110%"
+            style="border: none"
+          ></iframe>
+        </div>
+      </div>
+
+      <div id="factor_3" class="centered">
+        <p>
+          4. Gender Distribution of Employed ICT Specialists in the European
+          Union
+        </p>
+      </div>
+      <div class="container">
+        <div id="guide8" class="guide-container">
+          <h2>Plot Guide</h2>
+          <ul>
+            <li>you can select on country at a time</li>
+            <li>Pie parts are hoverable</li>
+            <li>
+              For each selected country you can travel through time and see the
+              changes Along the way
+            </li>
+            <li>Available Years are from 2014 to 2022 inclusive</li>
+          </ul>
+        </div>
+        <div id="pie_plot" class="plot-container">
+          <iframe
+            id="pie_plot_iframe"
+            src="pie.html"
+            height="100%"
+            width="100%"
+            style="border: none"
+          ></iframe>
+        </div>
+      </div>
+    </div> -->
+
+    <div id="improvements" class="section1">
+      <!-- Section 1: Line Plot -->
+      <div id="impact_intro" class="SectionHeader">
+        Cosideration and future Improvements
+      </div>
+
+      <div class="newContainer">
+        <div class="subHeader">
+          1. Key Considerations for buyers in ICT Device Purchases in EU for
+          2020
+        </div>
+        <div class="plotDescription">
+          As we shift our focus towards Considerations and Future Improvements,
+          it's essential to discuss the key factors that influenced buyers'
+          decisions in ICT device purchases within the European Union for the
+          year 2020. This period marked a significant point in digital
+          transformation trends, largely influenced by the global pandemic,
+          which accelerated the shift towards remote work, e-learning, and
+          digital communication. Understanding these considerations not only
+          sheds light on consumer behavior during a pivotal year but also offers
+          insights into future improvements in the ICT sector.
+        </div>
+        <div class="newPlotContainer">
+          <div class="newGuideContainer" id="guide9">
+            <div id="guide8" class="plotGuideHeader">Plot Guide</div>
+            <ul>
+              <li>
+                hover on the box to see the consideration title and the
+                percentage value
+              </li>
+              <li>
+                Title is not showing on some boxes size their size is very small
+              </li>
+              <li>The color scale of boxes is also proptional to % value</li>
+            </ul>
+          </div>
+          <div id="treemap_plot" class="plot-container">
+            <iframe
+              id="treemap_plot_iframe"
+              src="treemap.html"
+              height="105%"
+              width="130%"
+              style="border: none"
+            ></iframe>
+          </div>
+        </div>
+      </div>
+      <div class="newContainer">
+        <div class="subHeader">
+          2. Cross-Continental Perspectives: ICT Sector's Share in Business
+          Expenditure on R&D
+        </div>
+        <div class="plotDescription">
+          The second consideration under Considerations and Future Improvements
+          focuses on Cross-Continental Perspectives: ICT Sector's Share in
+          Business Expenditure on Research & Development (R&D). This analysis
+          provides insight into how various segments within the ICT sector
+          allocate resources towards innovation, technological advancements, and
+          product development. Understanding the distribution of R&D spending is
+          crucial for identifying growth areas, potential for innovation, and
+          competitive dynamics within the ICT industry. It also sheds light on
+          regional differences in prioritization and investment in technology
+          development.
+        </div>
+        <div class="newPlotContainer">
+          <div class="newGuideContainer" id="guide10">
+            <div id="guide10" class="plotGuideHeader">Plot Guide</div>
+            <ul>
+              <li>
+                You have the option to select up to 15 countries for comparison
+              </li>
+              <li>
+                The colored boxes to the right of the chart corresponds to
+                different ICT sub-sectors. Hovering over a box item will
+                highlight the associated segments in the bar with it % value
+              </li>
+              <li>
+                Click the left or right arrow in the time traveler to move
+                backward or forward in time.
+              </li>
+              <li>Available Years are from 2005 to 2020 inclusive</li>
+            </ul>
+          </div>
+          <div id="stacked_plot" class="plot-container">
+            <iframe
+              id="stacked_plot_iframe"
+              src="stackedtr.html"
+              height="100%"
+              width="100%"
+              style="border: none"
+            ></iframe>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="Footer">
+      <div class="footerContainer">
+        <img src="./pictures/unigelogo.png" />
+        <div class="name">Hussein Maatouk & Ibrahim Altufayli</div>
+      </div>
+      <h1>Tech-Eur Insights - Data Visualization 2024</h1>
+    </div>
+    <!-- <div class="footerContainer">
+        <img src="./pictures/gdpHeader.jpg" />
+        <div class="name">Ibrahim Altufayli</div>
+      </div> -->
+    <!-- <div id="improvements" class="section1">
+
+      <div id="impact_2" class="centered">
+        <p>
+          2. Cross-Continental Perspectives: ICT Sector's Share in Business
+          Expenditure on R&D
+        </p>
+      </div>
+      <div class="container">
+        <div id="guide10" class="guide-container">
+          <h2>Plot Guide</h2>
+          <ul>
+            <li>
+              You have the option to select up to 15 countries for comparison
+            </li>
+            <li>
+              The colored boxes to the right of the chart corresponds to
+              different ICT sub-sectors. Hovering over a box item will highlight
+              the associated segments in the bar char and a tooltip will appear
+              showing the exact percentage of R&D expenditure for that
+              sub-sector
+            </li>
+            <li>
+              Click the left or right arrow in the time traveler to move
+              backward or forward in time.
+            </li>
+            <li>Available Years are from 2005 to 2020 inclusive</li>
+          </ul>
+        </div>
+        <div id="stacked_plot" class="plot-container">
+          <iframe
+            id="stacked_plot_iframe"
+            src="stackedtr.html"
+            height="100%"
+            width="100%"
+            style="border: none"
+          ></iframe>
+        </div>
+      </div>
+    </div> -->
+    <script src="animations.js"></script>
+    <script>
+      $(document).ready(function () {
+        $("[href]").each(function () {
+          if (this.href == window.location.href) {
+            $(this).addClass("active");
+          }
+        });
+      });
+    </script>
+  </body>
+</html>

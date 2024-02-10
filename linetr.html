@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Line Chart</title>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <link
+    href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap"
+    rel="stylesheet"
+  />
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            height: 100%;
+        }
+        svg {
+            overflow: visible;
+        }
+        .country-selector {
+            position: fixed;
+            top: 20px;
+            left: 18%;
+            transform: translateX(-50%);
+            width: 300px;
+        }
+        .select-box {
+    position: relative;
+    background-color: #f4f4f4;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    padding: 10px;
+    display: flex; 
+    align-items: center; 
+    justify-content: space-between;
+
+}
+
+.arrow.down {
+    border: solid black;
+    border-width: 0 2px 2px 0;
+    display: inline-block;
+    padding: 3px;
+    transform: rotate(45deg);
+    -webkit-transform: rotate(45deg);
+    margin-left: auto; 
+}
+
+.select-box > span {
+    white-space: nowrap; 
+}
+
+        .options-container {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
+            display: none;
+            max-height: 200px;
+            z-index: 99;
+        }
+        .option {
+            padding: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+        .option:hover {
+            background-color: #d5e8fc;
+            color: #0c0a0a;
+        }
+        .option.selected {
+            background-color: #007bff;
+            color: #fff;
+        }
+        .option input[type="checkbox"] {
+            margin-right: 10px;
+            opacity: 0;
+            position: absolute;
+        }
+        
+
+        @media (max-width: 768px) {
+            .country-selector {
+                padding-top: 5vh;
+                padding-left: 5vw;
+                width: auto;
+            }
+        }
+        .tooltip {
+    position: absolute;
+    text-align: center;
+    padding: 12px;
+    font-size: 16px; 
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    pointer-events: none;
+    font-weight: bold;
+    color: #ffffff;
+    font-family: "Roboto";
+    box-shadow: none;
+    text-shadow: none;
+}
+
+@keyframes shadow-grow {
+    0% {
+        stroke: rgba(30, 144, 255, 0);
+        stroke-width: 0;
+    }
+    100% {
+        stroke: rgba(30, 144, 255, 0.5);
+        stroke-width: 15px;
+    }
+}
+
+circle:not(.legend-circle) {
+    transition: stroke 0.3s ease, stroke-width 0.3s ease;
+}
+
+circle:not(.legend-circle).hover-shadow {
+    animation: shadow-grow 0.5s forwards;
+}
+
+#selectt{
+    font-family: "Roboto";
+}
+    </style>
+</head>
+<body>
+    <div class="country-selector">
+        <div class="select-box">
+            <span id="selectt">Select Countries</span> 
+            <span class="arrow down"></span> 
+            <div class="options-container">
+               
+            </div>
+        </div>
+    </div>
+    
+    </script>
+    <script>
+      
+        let data;
+        const colors = [
+            "#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd",
+            "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf",
+            "#393b79", "#9c9ede", "#637939", "#8c6d31", "#843c39"
+        ];
+    
+        let width = window.innerWidth * 0.8,
+            height = window.innerHeight * 0.9 ,
+            margin = {
+                top: window.innerHeight * 0.2,
+                right: window.innerHeight * 0.2,
+                bottom: window.innerHeight * 0.05,
+                left: window.innerWidth * 0.1,
+            };
+    
+        let svg = d3.select("body")
+                    .append("svg")
+                    .attr("width", width)
+                    .attr("height", height)
+                    .append("g")
+                    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+    let  currentcountry=["EU"];
+        
+        d3.csv("https://raw.githubusercontent.com/hussein320/EU_DIGITAL/main/lineGDP/data/linegdp.csv").then(function(rawData) {
+          
+            data = processData(rawData);
+            let countries = Array.from(new Set(data.map(d => d.country))).sort();
+            populateSelectBox(countries);
+            currentcountry=["EU"]
+            update(currentcountry, data);
+        });
+    
+        function processData(rawData) {
+            let data = [];
+            rawData.forEach(d => {
+                let country = d.countries;
+                Object.keys(d).forEach(year => {
+                    if (!isNaN(year)) {
+                        data.push({
+                            country: country,
+                            year: +year,
+                            value: +d[year] || 0 
+                        });
+                    }
+                });
+            });
+            return data;
+        }
+        let optionsContainer = document.querySelector(".options-container");
+
+// Function to populate the select box with country options
+function populateSelectBox(countries) {
+    countries.forEach(country => {
+        if(country ==="EU"){return}
+        let option = document.createElement("div");
+        option.classList.add("option");
+        option.style.fontFamily = 'Roboto';
+        option.innerHTML = `<label><input type="checkbox" value="${country}" /> ${country}</label>`;
+        optionsContainer.appendChild(option);
+
+        option.addEventListener("click", function () {
+            let checkbox = this.querySelector("input[type=checkbox]");
+            let selectedCountries = getSelectedCountries();
+
+            if (selectedCountries.length < 5 || checkbox.checked) {
+                // Toggle only if the limit is not reached or if unchecking
+                checkbox.checked = !checkbox.checked;
+                this.classList.toggle("selected", checkbox.checked);
+            } else {
+                // If limit reached and trying to check a new box, revert the click
+                event.preventDefault();
+            }
+
+            // Update the chart
+            selectedCountries = getSelectedCountries();
+            currentcountry=selectedCountries;
+            update(currentcountry, data);
+        });
+    });
+}
+
+function hideOptionsContainer() {
+    optionsContainer.style.display = "none";
+}
+
+// Prevent hiding when clicking within the optionsContainer
+optionsContainer.addEventListener("click", function (event) {
+    event.stopPropagation();
+});
+
+// Function to get selected countries
+function getSelectedCountries() {
+    let selectedOptions = document.querySelectorAll(".option.selected input[type=checkbox]");
+    return Array.from(selectedOptions).map(option => option.value);
+}
+
+// Function to toggle the options container
+function toggleOptionsContainer() {
+    optionsContainer.style.display = optionsContainer.style.display === "none" ? "block" : "none";
+}
+
+// Set up event listeners
+let selectBox = document.querySelector(".select-box");
+selectBox.addEventListener("click", function(event) {
+    toggleOptionsContainer();
+    event.stopPropagation(); // Prevents event bubbling
+});
+
+document.body.addEventListener("click", function() {
+    document.querySelector(".options-container").style.display = "none";
+});
+
+
+
+function update(selectedCountries, data) {
+    if (!selectedCountries.includes("EU")) {
+        selectedCountries.unshift("EU")
+    }
+    
+
+    svg.selectAll("*").remove();
+
+    const xScale = d3.scaleTime()
+        .domain(d3.extent(data, d => new Date(d.year, 0)))
+        .range([20, width - margin.left - margin.right]);
+
+    const yScale = d3.scaleLinear()
+        .domain([0, d3.max(data, d => d.value)])
+        .range([height - margin.top - margin.bottom, 0]);
+
+    svg.append("g")
+        .attr("transform", `translate(0, ${height - margin.top - margin.bottom})`)
+        .call(d3.axisBottom(xScale).tickFormat(d3.timeFormat("%Y")))
+        .selectAll("text") 
+    .style("font-family", "Roboto");
+    svg.append("g")
+        .call(d3.axisLeft(yScale))
+        .selectAll("text") 
+    .style("font-family", "Roboto");
+
+        const line = d3.line()
+    .defined(d => d.value != null && d.value !== 0) 
+    .x(d => xScale(new Date(d.year, 0)))
+    .y(d => yScale(d.value))
+    .curve(d3.curveMonotoneX);
+
+        const legend = svg.append('g')
+    .attr('class', 'legend')
+    .attr('transform', `translate(${width - margin.right}, ${margin.top})`);
+
+    selectedCountries.forEach((country, index) => {
+    let color = colors[index % colors.length];
+    let legendItem = legend.append('g')
+    .attr('class', 'legend-item legend-item-' + country.replace(/\s/g, ''))
+    .attr('transform', `translate(0, ${index * 20})`);
+
+    svg
+        .append("text")
+        .attr("class", "axis-title")
+        .attr("y", height-110)
+        .attr("x", (width / 2)-90)
+        .style("text-anchor", "middle")
+        .style("font-size", "16px")
+        .text("Years")
+        .style("font-family","Roboto");
+      svg
+        .append("text")
+        .attr("class", "axis-title")
+        .attr("transform", "rotate(-90)")
+        .attr("x", -height / 3)
+        .attr("y", -50)
+        .style("text-anchor", "middle")
+        .style("font-size", "16px")
+        .text("% of ICT Total GDP")
+        .style("font-family","Roboto");
+
+    legendItem.append('circle')
+    .attr('class', 'legend-circle')
+        .attr('cx', 10)
+        .attr('cy', 10)
+        .attr('r', 5)
+        .attr('fill', color);
+
+    legendItem.append('text')
+        .attr('x', 20)
+        .attr('y', 15)
+        .text(country)
+        .style("font-family","Roboto");
+        
+        let selectedCountry = null;
+const glowEffect = "0 0 5px white, 0 0 5px blue";
+
+
+function highlightLine(country) {
+    svg.selectAll('.linel') 
+        .style('opacity', d => (d && d[0] && d[0].country === country) ? 1 : 0.05);
+
+    svg.selectAll('circle:not(.legend-circle)')
+        .style('opacity', d => (d && d.country === country) ? 1 : 0.05);
+
+    svg.selectAll('.legend-circle')
+        .style('opacity', 1);
+}
+
+function resetHighlight() {
+    svg.selectAll('path').style('opacity', 1);
+    svg.selectAll('circle').style('opacity', 1);
+    svg.selectAll('.legend-item text').style('text-shadow', null);
+}
+
+legendItem.on('mouseover', function() {
+    if (selectedCountry === null) {
+        const hoveredCountry = country; 
+        highlightLine(hoveredCountry);
+
+        svg.selectAll(`.text-${hoveredCountry.replace(/\s/g, '')}`)
+            .style('visibility', 'visible');
+    }
+});
+
+legendItem.on('mouseout', function() {
+    if (selectedCountry === null) { 
+        resetHighlight();
+
+        svg.selectAll(`.text-${country.replace(/\s/g, '')}`)
+            .style('visibility', 'hidden');
+    }
+});
+
+
+
+
+});
+
+
+function toggleSelection(country) {
+    let countryClass = 'legend-item-' + country.replace(/\s/g, '');
+    let isActive = d3.select('.' + countryClass).classed('active');
+    d3.select('.' + countryClass).classed('active', !isActive);
+
+    svg.selectAll('path')
+        .style('opacity', d => (isActive || d.country === country) ? 1 : 0.1);
+}
+
+    selectedCountries.forEach((country, index) => {
+    let countryDataPath = data.filter(d => d.country === country);
+    let countryData = countryDataPath.filter(d => d.value !== 0)
+    let color = colors[index % colors.length];
+    dataToPlot = []
+    for(var idx in countryDataPath){
+        if(countryDataPath[idx].value === 0){
+            svg.append("path")
+            .datum(dataToPlot) // Filter data before binding
+            .attr("fill", "none")
+            .classed("linel", true)
+            .attr("stroke", color)
+            .attr("stroke-width", 2)
+            .attr("d", line);
+            dataToPlot = []
+        }
+        else{
+          dataToPlot.push(countryDataPath[idx])
+        }
+    }
+    svg.append("path")
+            .datum(dataToPlot) // Filter data before binding
+            .attr("fill", "none")
+            .classed("linel", true)
+            .attr("stroke", color)
+            .attr("stroke-width", 2)
+            .attr("d", line);
+    
+
+       svg.selectAll(".dot-" + country.replace(/\s/g, ''))
+        .data(countryData)
+        .enter().append("circle")
+        .attr("class", "dot-" + country.replace(/\s/g, '')) 
+        .attr("cx", d => xScale(new Date(d.year, 0)))
+        .attr("cy", d => yScale(d.value))
+        .attr("r", 5)
+        .attr("fill", color)
+        .on("mouseover", (event, d) => {
+            tooltip.transition()
+                .duration(200)
+                .style("opacity", 1);
+                tooltip.style.fontFamily = 'Roboto';
+            tooltip.html(`${d.country}, ${d.year}<br>% of ICT sector: ${d.value.toFixed(2)}%`)
+                .style("background-color", color)
+                .style("left",(event.pageX - 80) + "px")
+                .style("top", (event.pageY -88) + "px")
+                .style("font-family", "Roboto");
+        })
+        .on("mouseout", () => {
+            tooltip.transition()
+                .duration(200)
+                .style("opacity", 0);
+        });
+
+        svg.selectAll(".text-" + country.replace(/\s/g, ''))
+        .data(countryData)
+        .enter().append('text')
+        .attr("x", d => xScale(new Date(d.year, 0)))
+        .attr("y", d => yScale(d.value) + 20) 
+        .text(d => d.value)
+        .style("visibility", "hidden")
+        .attr("class", "text-" + country.replace(/\s/g, ''))
+        .style("text-anchor", "middle")
+        .style("background", "white")
+        .style("padding", "2px")
+        .style("box-shadow", "2px 2px 2px rgba(0, 0, 0, 0.5)")
+        .style("border-radius", "4px");
+});
+
+    const tooltip = d3.select("body").append("div")
+    .attr("class", "tooltip")
+    .style("opacity", 0);
+
+
+    function showTooltip(event, d) {
+        tooltip.transition()
+            .duration(200)
+            .style("opacity", .9);
+        tooltip.html(`Year: ${d.year}<br/>Value: ${d.value}`)
+            .style("left", (event.pageX) + "px")
+            .style("top", (event.pageY - 28) + "px")
+            .style("font-family","Roboto");
+    }
+
+    function hideTooltip() {
+        tooltip.transition()
+            .duration(500)
+            .style("opacity", 0);
+    }
+
+    
+}
+
+    
+    
+    
+    </script>
+    </body>
+    </html>

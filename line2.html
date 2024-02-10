@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+
+<html>
+  <meta charset="utf-8" />
+  <style>
+    html,
+    body {
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+    #show {
+      position: absolute;
+      float: right;
+      right: 5cm;
+      text-align: center;
+      border: #000 2px;
+      margin-top: 0px;
+      width: 5cm !important;
+      height: 6cm;
+      transition: opacity 5s ease-in-out;
+    }
+
+    #show text {
+      width: 5cm;
+    }
+    body,
+    html {
+      margin: 20px;
+      margin-top: 1cm;
+      padding: 0;
+    }
+
+    #my_dataviz {
+      padding-top: -30px !important;
+    }
+
+    .dropdown {
+      position: relative;
+      display: inline-block;
+      width: 300px;
+      vertical-align: top;
+    }
+
+    .dropdown-select {
+      border: 1px solid #ccc;
+      padding: 10px;
+      background-color: #f9f9f9;
+      cursor: pointer;
+      width: 100%;
+    }
+
+    .dropdown-list {
+      display: none;
+      position: absolute;
+      background-color: #f9f9f9;
+      box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+      padding: 10px;
+      z-index: 1;
+      width: 100%;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    #yearSelect {
+      display: none;
+    }
+
+    .selection-container {
+      padding-top: 3%;
+      padding-left: 7%;
+      display: flex;
+      justify-content: start;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .arrow {
+      float: right;
+    }
+
+    .arrow.down {
+      border: solid black;
+      border-width: 0 2px 2px 0;
+      display: inline-block;
+      padding: 3px;
+      transform: rotate(45deg);
+      -webkit-transform: rotate(45deg);
+    }
+
+    .tooltipss-group {
+      overflow: hidden;
+    }
+  </style>
+  <body>
+    <!-- Load d3.js -->
+    <script src="https://d3js.org/d3.v4.js"></script>
+
+    <!-- Initialize a select button -->
+    <div class="selection-container">
+      <div class="dropdown">
+        <div class="dropdown-select">
+          <span>Check Countries</span>
+          <i class="arrow down"></i>
+        </div>
+        <div class="dropdown-list"></div>
+      </div>
+    </div>
+
+    <!-- <div></div> -->
+    <p id="show"></p>
+    <div id="my_dataviz"></div>
+    <!-- Color Scale -->
+    <script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
+    <script>
+      let expanded = false;
+
+      var allcountries;
+      var months;
+      var allGroup;
+      var dataforineer;
+      var x;
+      var hoverLines;
+      var hover_box;
+      var tooltipsGroup;
+    </script>
+    <script>
+      // set the dimensions and margins of the graph
+
+      d3.csv(
+        "https://raw.githubusercontent.com/hussein320/EU_DIGITAL/main/lineGDP/data/linegdp.csv",
+        function (data) {
+          var margin = { top: 0, right: 180, bottom: 50, left: 160 },
+            width = 1060 - margin.left - margin.right,
+            height = 350 - margin.top - margin.bottom;
+
+          // append the svg object to the body of the page
+          var svg = d3
+            .select("#my_dataviz")
+            .append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+            .style("position", "absolute")
+            .style("top", "110px")
+            .append("g")
+            .attr(
+              "transform",
+              "translate(" + margin.left + "," + margin.top + ")"
+            );
+          tooltipsGroup = svg.append("g").classed("tooltips-group", true);
+          //Read the data
+          allcountries = data.map((item) => item.countries);
+          // List of groups (here I have one group per column)
+
+          var countries = data
+            .map(function (item) {
+              return item.countries;
+            })
+            .filter(function (value, index, self) {
+              return self.indexOf(value) === index && value !== "EU"; // Ensure unique countries and exclude "EU"
+            });
+
+          var dropdownList = document.querySelector(".dropdown-list");
+
+          countries.forEach(function (country) {
+            var label = document.createElement("label");
+            var checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.value = country;
+            label.appendChild(checkbox);
+            label.appendChild(document.createTextNode(country));
+            dropdownList.appendChild(label);
+            dropdownList.appendChild(document.createElement("br"));
+          });
+
+          document
+            .querySelector(".dropdown-select")
+            .addEventListener("click", function () {
+              dropdownList.style.display =
+                dropdownList.style.display === "none" ? "block" : "none";
+            });
+
+          dropdownList.addEventListener("change", function () {
+            var checkedBoxes = dropdownList.querySelectorAll(
+              "input[type='checkbox']:checked"
+            );
+            var selectedCountries = Array.from(checkedBoxes).map(function (
+              box
+            ) {
+              return box.value;
+            });
+            update(selectedCountries); // Ensure this function is defined and correctly updates the chart
+          });
+
+          // Close the dropdown if clicked outside
+          document.addEventListener("click", function (e) {
+            var dropdown = document.querySelector(".dropdown");
+            if (!dropdown.contains(e.target)) {
+              var dropdownList = document.querySelector(".dropdown-list");
+              dropdownList.style.display = "none";
+            }
+          });
+
+          var global = data.filter(function (d) {
+            return d.countries == "EU27";
+          });
+          var checkdata = data.filter(function (d) {
+            return d.countries == "EU27";
+          });
+          dataforineer = data;
+
+          hoverLines = svg.append("g").classed("hover-lines", true);
+          hover_box = svg.append("g").classed("hover-boxes", true);
+          allGroup = d3
+            .map(data, function (d) {
+              return d.state;
+            })
+            .keys();
+          years = [
+            "2008",
+            "2009",
+            "2010",
+            "2011",
+            "2012",
+            "2013",
+            "2014",
+            "2015",
+            "2016",
+            "2017",
+            "2017",
+            "2018",
+            "2019",
+            "2020",
+          ];
+          var values = Object.keys(global[0])
+            .filter((key) => key !== "countries")
+            .map((key) => parseFloat(global[0][key]));
+          var min = d3.min(values);
+          const max = d3.max(values);
+
+          x = d3
+            .scalePoint()
+            .domain(years)
+            //The d3.extent function in D3.js is used to compute the minimum and maximum values of an array.
+            .range([20, width]);
+
+          svg
+            .append("g")
+            .attr("transform", "translate(0," + height + ")")
+            .call(d3.axisBottom(x).ticks(10).tickFormat(String)); //The ticks(10) specifies that you want approximately 7 tick marks on the x-axis.
+
+          // Add Y axis
+          var y = d3
+            .scaleLinear()
+            .domain([min - 1, max + 1])
+            .range([height, 20]);
+
+          svg.append("g").classed("y-axis", true).call(
+            d3.axisLeft(y).ticks(16) // Adjust the number of ticks as needed
+          );
+
+          svg
+            .append("g")
+            .attr("class", "grid")
+            .attr("transform", "translate(0," + height + ")")
+            .call(
+              d3
+                .axisBottom(x)
+                .ticks(10)
+                .tickSize(-height + 20)
+                .tickFormat("")
+            )
+            .selectAll("line")
+            .style("stroke-width", 0.3); // Set the stroke width for x-axis grid lines
+
+          // Append y-axis grid lines
+          svg
+            .append("g")
+            .attr("class", "grid")
+            .call(d3.axisLeft(y).ticks(16).tickSize(-width).tickFormat(""))
+            .selectAll("line")
+            .style("stroke-width", 0.3); // Set the stroke width for y-axis grid lines
+
+          svg
+            .append("text")
+            .attr("class", "x label")
+            .attr("text-anchor", "end")
+            .attr("x", width / 2)
+            .attr("y", height + 46)
+            .text("Years");
+
+          svg
+            .append("text")
+            .attr("class", "y label")
+            .attr("text-anchor", "end")
+            .attr("x", -height / 7)
+            .attr("y", -50)
+            .attr("dy", ".15em")
+            .attr("transform", "rotate(-90)")
+            .text("% Of ICT sector from the Total GDP");
+
+          let newData = Object.keys(global[0])
+            .filter((key) => key !== "countries")
+            .map((year) => {
+              return { year: year, value: parseFloat(global[0][year]) };
+            });
+          console.log(newData);
+          // Your existing D3 code
+          var line = svg
+            .append("g")
+            .append("path")
+            .datum(newData)
+            .attr(
+              "d",
+              d3
+                .line()
+                .x(function (d) {
+                  return x(d.year);
+                })
+                .y(function (d) {
+                  if (d.min === "") {
+                    return null;
+                  }
+                  return y(+d.value);
+                })
+            )
+            .attr("stroke", "#1f77b4")
+            .style("stroke-width", 2)
+            .attr("stroke-opacity", 1)
+            .style("fill", "none")
+            .classed("line1", true);
+
+          var scatt = svg
+            .append("g")
+            .selectAll("dot")
+            .data(newData)
+            .enter()
+            .append("circle")
+            .attr("cx", function (d) {
+              return x(d.year);
+            })
+            .attr("cy", function (d) {
+              return y(d.value);
+            })
+            .attr("r", 3)
+            .style("fill", "#1f77b4")
+            .classed("scatt", true)
+            .attr("fill-opacity", 1)
+            .on("mouseover", function (d) {
+              // Get the current mouse position (relative to the SVG container)
+              const [mouseX, mouseY] = d3.mouse(this);
+
+              // Define tooltip dimensions and offset
+              const tooltipWidth = 200;
+              const tooltipHeight = 60;
+              const tooltipOffsetX = 30;
+              const tooltipOffsetY = 80;
+
+              // Create the tooltip box first so it's underneath the text
+              const tooltipGroup = tooltipsGroup
+                .append("g")
+                .classed("tooltipss-group", true);
+
+              tooltipGroup
+                .append("rect")
+                .attr("x", mouseX - tooltipOffsetX)
+                .attr("y", mouseY - tooltipOffsetY)
+                .attr("width", tooltipWidth)
+                .attr("height", tooltipHeight)
+                .attr("rx", 10) // Rounded corners
+                .attr("ry", 10) // Rounded corners
+                .style("fill", "#1f77b4")
+                .style("stroke", "white")
+                .style("fill-opacity", "1") // Ensure fill is not transparent
+                .style("opacity", "1")
+                .style("stroke-width", "2px");
+
+              // Add text for the country and year on top of the rectangle
+              tooltipGroup
+                .append("text")
+                .attr("x", mouseX - tooltipOffsetX + 10)
+                .attr("y", mouseY - tooltipOffsetY + 20)
+                .style("fill", "white")
+                .text("EU , " + d.year);
+
+              // Add text for the value on top of the rectangle
+              tooltipGroup
+                .append("text")
+                .attr("x", mouseX - tooltipOffsetX + 10)
+                .attr("y", mouseY - tooltipOffsetY + 40)
+                .style("fill", "white")
+                .text("% of ICT sector: " + d.value + "%");
+            })
+            .on("mouseout", function () {
+              // Remove the tooltip group on mouseout
+              svg.selectAll(".tooltipss-group").remove();
+            });
+
+          // Create a legend container
+          var legend = svg
+            .append("g")
+            .attr("transform", "translate(" + (width + 10) + "," + 20 + ")")
+            .classed("leg", true);
+
+          var legendEntries = legend
+            .selectAll(".legend")
+            .data(global)
+            .enter()
+            .append("g")
+            .attr("class", "legend")
+            .attr("transform", function (d, i) {
+              return "translate(0," + i * 30 + ")";
+            });
+
+          legendEntries
+            .append("rect")
+            .attr("x", 20)
+            .attr("y", 0)
+            .attr("width", 20) // Adjust the width as needed
+            .attr("height", 20) // Adjust the height as needed
+            .style("fill", "#1f77b4");
+
+          legendEntries
+            .append("text")
+            .attr("x", 50) // Adjust the position as needed
+            .attr("y", 10) // Adjust the position as needed
+            .attr("dy", ".35em")
+            .style("text-anchor", "start")
+            .text("EU");
+
+          // A function that update the chart
+          function update(selectedcountries) {
+            console.log("selected countries are: " + selectedcountries);
+            if (!selectedcountries.includes("EU27")) {
+              selectedcountries.push("EU27");
+            }
+            console.log(selectedcountries);
+            let filteredData = dataforineer.filter((d) =>
+              selectedcountries.includes(d.countries)
+            );
+
+            function extractDataForSelectedCountries(data, countries) {
+              return data.filter((item) => countries.includes(item.countries));
+            }
+
+            // Extracting the data
+            let extractedData = extractDataForSelectedCountries(
+              dataforineer,
+              selectedcountries
+            );
+
+            let transformedData = extractedData
+              .map((countryData) => {
+                // Extract the country name
+                let countryName = countryData.countries;
+
+                // Transform yearly data into an array of { country, year, value } objects
+                return Object.keys(countryData)
+                  .filter((key) => key !== "countries") // Exclude the 'countries' key
+                  .map((year) => {
+                    // Handle missing or ":" data as null or undefined
+                    let value =
+                      countryData[year] === ":"
+                        ? null
+                        : parseFloat(countryData[year]);
+                    return {
+                      country: countryName,
+                      year: year,
+                      value: value,
+                    };
+                  });
+              })
+              .flat(); // Flatten the array of arrays into a single array
+
+            console.log(transformedData);
+
+            svg.selectAll(".line1").remove();
+            svg.selectAll(".line2").remove();
+            svg.selectAll(".scatt").remove();
+            svg.selectAll(".line3").remove();
+            svg.selectAll(".line4").remove();
+            svg.selectAll("#show").remove();
+            svg.selectAll(".ticks").remove();
+
+            svg.selectAll(".scatt1").remove();
+            svg.selectAll("g circle").remove();
+            svg.selectAll(".leg").remove();
+            svg.selectAll(".y-axis").remove();
+            svg.selectAll(".tooltipss-group").remove();
+
+            const colors = [
+              "#1f77b4", // blue
+              "#ff7f0e", // orange
+              "#2ca02c", // green
+              "#d62728", // red
+              "#9467bd", // purple
+              "#8c564b", // brown
+              "#e377c2", // pink
+              "#7f7f7f", // gray
+              "#bcbd22", // lime green
+              "#17becf", // cyan
+              "#393b79", // dark blue
+              "#9c9ede", // lavender
+              "#637939", // olive
+              "#8c6d31", // bronze
+              "#843c39", // dark red
+            ];
+
+            var countryColorMap = {};
+
+            // First, set the color for EU27
+            countryColorMap["EU27"] = "#1f77b4";
+
+            // Then assign colors to other countries
+            selectedcountries.forEach((country, index) => {
+              if (country !== "EU27") {
+                // Find the next color in the array that isn't #1f77b4
+                let colorIndex =
+                  selectedcountries.indexOf("EU27") === -1 ? index : index + 1;
+                countryColorMap[country] = colors[colorIndex % colors.length];
+              }
+            });
+
+            console.log(countryColorMap);
+
+            let valueArray = transformedData
+              .filter((item) => item.value !== null) // Optional: Exclude null values if you have any
+              .map((item) => parseFloat(item.value));
+
+            console.log(valueArray);
+            var min = d3.min(valueArray);
+            var max = d3.max(valueArray);
+            var y = d3
+              .scaleLinear()
+              .domain([min - 1, max + 1])
+              .range([height, 20]);
+            svg.append("g").classed("y-axis", true).call(
+              d3.axisLeft(y).ticks(26) // Adjust the number of ticks as needed
+            );
+            var updatedLegendData = selectedcountries.map((country) => {
+              return {
+                country: country,
+                color: countryColorMap[country],
+              };
+            });
+
+            // Now you can use updatedLegendData in your code
+            var updatedLegendData = selectedcountries.map((country) => {
+              return {
+                country: country,
+                color: countryColorMap[country],
+              };
+            });
+
+            // Now you can use updatedLegendData in your code
+            var legend = svg
+              .append("g")
+              .attr("transform", "translate(" + (width + 10) + "," + 20 + ")")
+              .classed("leg", true);
+
+            var legendEntries = legend
+              .selectAll(".legend")
+              .data(updatedLegendData)
+              .enter()
+              .append("g")
+              .attr("class", "legend")
+              .attr("transform", function (d, i) {
+                return "translate(0," + i * 30 + ")";
+              });
+
+            legendEntries
+              .append("rect")
+              .attr("x", 20)
+              .attr("y", 0)
+              .attr("width", 20) // Adjust the width as needed
+              .attr("height", 20) // Adjust the height as needed
+              .style("fill", function (d) {
+                return d.color;
+              });
+
+            legendEntries
+              .append("text")
+              .attr("x", 50) // Adjust the position as needed
+              .attr("y", 10) // Adjust the position as needed
+              .attr("dy", ".35em")
+              .style("text-anchor", "start")
+              .text(function (d) {
+                return d.country;
+              });
+
+            var countryColor = {};
+            for (let i = 0; i < selectedcountries.length; i++) {
+              const years = [
+                "2008",
+                "2009",
+                "2010",
+                "2011",
+                "2012",
+                "2013",
+                "2014",
+                "2015",
+                "2016",
+                "2017",
+                "2017",
+                "2018",
+                "2019",
+                "2020",
+              ];
+
+              var country = selectedcountries[i];
+              countryColor[country] = countryColorMap[country];
+              var localdata;
+
+              var datamin;
+              var datamax;
+              var datamean;
+              var valuesmin;
+              var valuesmax;
+              var valuesmean;
+              var year;
+              var newData;
+
+              // // Check if the current year is 2023
+              if (year === "2023") {
+              } else {
+                // //  // For other years, use the original code
+                newData = transformedData.filter(function (d) {
+                  return d.country == selectedcountries[i];
+                });
+
+                console.log(newData);
+              }
+
+              var lineGenerator = d3
+                .line()
+                .defined(function (d) {
+                  return d.value != null;
+                }) // Only draw line if value is not null
+                .x(function (d) {
+                  return x(d.year);
+                })
+                .y(function (d) {
+                  return y(+d.value);
+                });
+
+              var tooltipsGroup = svg
+                .append("g")
+                .classed("tooltips-group", true);
+
+              var line1 = svg
+                .append("g")
+                .append("path")
+                .datum(newData)
+                .attr("d", lineGenerator)
+                .attr("stroke", countryColorMap[country])
+                .style("stroke-width", 2)
+                .attr("stroke-opacity", 1)
+                .style("fill", "none")
+                .classed("line3", true);
+
+              var scatt = svg
+                .append("g")
+                .selectAll("dot")
+                .data(
+                  newData.filter(function (d) {
+                    return d.value != null;
+                  })
+                ) // Filter out null values
+                .enter()
+                .append("circle")
+                .attr("cx", function (d) {
+                  return x(d.year);
+                })
+                .attr("cy", function (d) {
+                  return y(+d.value);
+                })
+                .attr("r", 3)
+                .classed("scatt1", true)
+                .style("fill", countryColorMap[country])
+                .attr("fill-opacity", 1)
+                .on("mouseover", function (d) {
+                  // Get the current mouse position (relative to the SVG container)
+                  const [mouseX, mouseY] = d3.mouse(this);
+
+                  // Define tooltip dimensions and offset
+                  const tooltipWidth = 200;
+                  const tooltipHeight = 60;
+                  const tooltipOffsetX = 190;
+                  const tooltipOffsetY = 80;
+
+                  // Create the tooltip box first so it's underneath the text
+                  const tooltipGroup = tooltipsGroup
+                    .append("g")
+                    .classed("tooltipss-group", true);
+
+                  tooltipGroup
+                    .append("rect")
+                    .attr("x", mouseX - tooltipOffsetX)
+                    .attr("y", mouseY - tooltipOffsetY)
+                    .attr("width", tooltipWidth)
+                    .attr("height", tooltipHeight)
+                    .attr("rx", 10) // Rounded corners
+                    .attr("ry", 10) // Rounded corners
+                    .style("fill", countryColorMap[d.country])
+                    .style("stroke", countryColorMap[d.country])
+                    .style("fill-opacity", "1") // Ensure fill is not transparent
+                    .style("opacity", "1")
+                    .style("stroke-width", "2px");
+
+                  // Add text for the country and year on top of the rectangle
+                  tooltipGroup
+                    .append("text")
+                    .attr("x", mouseX - tooltipOffsetX + 10)
+                    .attr("y", mouseY - tooltipOffsetY + 20)
+                    .style("fill", "white")
+                    .text(d.country + ", " + d.year);
+
+                  // Add text for the value on top of the rectangle
+                  tooltipGroup
+                    .append("text")
+                    .attr("x", mouseX - tooltipOffsetX + 10)
+                    .attr("y", mouseY - tooltipOffsetY + 40)
+                    .style("fill", "white")
+                    .text("% of ICT sector: " + d.value + "%");
+                })
+                .on("mouseout", function () {
+                  // Remove the tooltip group on mouseout
+                  svg.selectAll(".tooltipss-group").remove();
+                });
+            }
+          }
+
+          // Function to get all selected years from checkboxes
+          function getAllSelectedcount() {
+            return allcountries.filter(function (country) {
+              return d3.select('[id="' + country + '"]').property("checked");
+            });
+          }
+
+          d3.select(".butt").on("click", function () {
+            // var selectedOption = d3.select(this).property("value");
+            var selectedcountries = getAllSelectedcount();
+
+            update(selectedcountries);
+          });
+        }
+      );
+    </script>
+  </body>
+</html>

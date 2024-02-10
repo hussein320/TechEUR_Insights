@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Data Visualization</title>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <link
+    href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap"
+    rel="stylesheet"
+  />
+    <style>
+
+.country-selector {
+        position: fixed;
+        top: 20px;
+        left: 18%;
+        transform: translateX(-50%);
+        width: 300px;
+        z-index: 1000;
+      }
+
+      .options-container {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background-color: #fff;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        overflow-y: auto;
+        display: none;
+        max-height: 200px;
+        z-index: 1000; 
+      }
+
+      .select-box {
+        position: relative;
+        background-color: #f4f4f4;
+        border-radius: 5px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        cursor: pointer;
+        padding: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .arrow.down {
+        border: solid black;
+        border-width: 0 2px 2px 0;
+        display: inline-block;
+        padding: 3px;
+        transform: rotate(45deg);
+        -webkit-transform: rotate(45deg);
+        margin-left: auto;
+      }
+
+      .select-box > span {
+        white-space: nowrap;
+      }
+
+      .option {
+        padding: 10px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+      }
+
+      .option:hover {
+        background-color: #d5e8fc;
+        color: #0c0a0a;
+      }
+
+      .option.selected {
+        background-color: #007bff;
+        color: #fff;
+      }
+
+      .option input[type="checkbox"] {
+        margin-right: 10px;
+        opacity: 0;
+        position: absolute;
+      }
+
+      @media (max-width: 768px) {
+        .country-selector {
+          padding-top: 5vh;
+          padding-left: 5vw;
+          width: auto;
+        }
+      }
+        dot {
+            stroke: #000;
+        }
+        .tooltip {
+    position: absolute;
+    min-width: 100px;
+    max-width: 200px;
+    background-color: rgba(255, 255, 255, 0.9);
+    border: solid 1px #ddd;
+    border-radius: 5px;
+    padding: 10px;
+    box-shadow: 0px 0px 10px rgba(0,0,0,0.5);
+    color: #333;
+    font-size: 14px;
+    pointer-events: none; 
+    opacity: 1;
+     
+}
+
+circle:not(.legend-circle) {
+    transition: stroke 0.3s ease, stroke-width 0.3s ease;
+}
+
+circle:not(.legend-circle).hover-shadow {
+    animation: shadow-grow 0.5s forwards;
+}
+
+.alert-popup {
+  display: none; 
+  position: fixed; 
+  left: 0;
+  top: 0;
+  width: 100%; 
+  height: 100%; 
+  overflow: auto; 
+  background-color: rgb(0,0,0); 
+  background-color: rgba(0,0,0,0.4); 
+  z-index: 9999; 
+}
+
+.alert-content {
+  background-color: #fefefe;
+  margin: 15% auto; 
+  padding: 20px;
+  border: 1px solid #888;
+  width: 80%; 
+  border-radius: 5px;
+}
+
+.close-btn {
+  color: #aaaaaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.close-btn:hover,
+.close-btn:focus {
+  color: #000;
+  text-decoration: none;
+  cursor: pointer;
+}
+.selectt {
+        font-family: "Roboto";
+      }
+      .textLegend {
+        font-family: "Roboto";
+      }
+    </style>
+</head>
+<body>
+    <div class="country-selector">
+        <div class="select-box">
+          <span class="selectt">Check Countries</span>
+          <i class="arrow down"></i>
+        </div>
+        <div class="options-container">
+          <!-- Options will be dynamically populated here -->
+        </div>
+      </div>
+  
+    
+    <div id="my_dataviz"></div>
+    <div id="alertPopup" class="alert-popup">
+      <div class="alert-content">
+        <span class="close-btn">&times;</span>
+        <p id="alertMessage"></p>
+      </div>
+    </div>
+    
+    <script>
+
+        
+       var data=[{'country': 'EU', 'years': {'2011': '1,111,040', '2012': '980,111', '2013': '1,010,000', '2014': '1,100,000', '2015': '1,119,369', '2016': '1,160,000', '2017': '1,213,346', '2018': '1,332,246', '2019': ' 1,310,764', '2020': '1,451,919'}}, {'country': 'Belgium', 'years': {'2011': '25,039', '2012': '25,935', '2013': '26,494', '2014': '27,363', '2015': '28,278', '2016': '30,019', '2017': '31,743', '2018': '32,679', '2019': '35,096', '2020': '36,793'}}, {'country': 'Bulgaria', 'years': {'2011': '7,902', '2012': '8,508', '2013': '9,171', '2014': '9,843', '2015': '10,708', '2016': '11,534', '2017': '12,177', '2018': '12,817', '2019': '13,141', '2020': '13,416'}}, {'country': 'Czechia', 'years': {'2011': '25,070', '2012': '24,083', '2013': '23,760', '2014': '33,943', '2015': '35,334', '2016': '37,880', '2017': '42,113', '2018': '45,227', '2019': '47,570', '2020': '50,562'}}, {'country': 'Denmark', 'years': {'2011': '12,396', '2012': '12,733', '2013': '13,074', '2014': '13,619', '2015': '13,686', '2016': '14,504', '2017': '15,214', '2018': '15,553', '2019': '15,771', '2020': '15,846'}}, {'country': 'Germany', 'years': {'2011': '102,594', '2012': '104,726', '2013': '105,444', '2014': '108,336', '2015': '108,869', '2016': '111,083', '2017': '113,924', '2018': '112,473', '2019': '114,845', '2020': '110,916'}}, {'country': 'Estonia', 'years': {'2011': '3,264', '2012': '3,611', '2013': '3,947', '2014': '4,203', '2015': '4,365', '2016': '4,760', '2017': '5,330', '2018': '5,999', '2019': '6,537', '2020': '7,043'}}, {'country': 'Ireland', 'years': {'2011': '8,972', '2012': '9,381', '2013': ':', '2014': ':', '2015': '12,077', '2016': '12,291', '2017': '13,159', '2018': '13,275', '2019': '13,594', '2020': '14,159'}}, {'country': 'Spain', 'years': {'2011': '56,429', '2012': '58,095', '2013': '60,143', '2014': '63,502', '2015': '66,942', '2016': '69,992', '2017': '71,721', '2018': '72,856', '2019': '74,893', '2020': '74,639'}}, {'country': 'France', 'years': {'2011': '111,599', '2012': '117,809', '2013': '126,653', '2014': '140,321', '2015': '142,934', '2016': '146,252', '2017': '155,824', '2018': '167,318', '2019': '180,426', '2020': '193,609'}}, {'country': 'Croatia', 'years': {'2011': ':', '2012': '5,187', '2013': '5,438', '2014': '5,630', '2015': '5,878', '2016': '6,130', '2017': '6,423', '2018': '6,926', '2019': '10,027', '2020': '10,562'}}, {'country': 'Italy', 'years': {'2011': '104,815', '2012': '104,846', '2013': '103,656', '2014': '104,223', '2015': '105,513', '2016': '105,442', '2017': '106,505', '2018': '108,118', '2019': '108,278', '2020': '111,795'}}, {'country': 'Cyprus', 'years': {'2011': '853', '2012': '905', '2013': '949', '2014': '1,013', '2015': '1,131', '2016': '1,392', '2017': '1,637', '2018': '1,821', '2019': '2,302', '2020': '2,519'}}, {'country': 'Latvia', 'years': {'2011': '3,878', '2012': '4,439', '2013': '4,977', '2014': '5,432', '2015': '6,133', '2016': '6,567', '2017': '6,559', '2018': '6,900', '2019': '7,021', '2020': '7,096'}}, {'country': 'Lithuania', 'years': {'2011': '2,962', '2012': '3,713', '2013': '3,964', '2014': '5,177', '2015': '5,731', '2016': '6,164', '2017': '6,501', '2018': '7,104', '2019': '7,843', '2020': '8,602'}}, {'country': 'Luxembourg', 'years': {'2011': '1,681', '2012': '1,790', '2013': '1,889', '2014': '2,000', '2015': '2,142', '2016': '2,207', '2017': '2,326', '2018': '2,456', '2019': '2,550', '2020': '2,612'}}, {'country': 'Hungary', 'years': {'2011': '28,511', '2012': '27,943', '2013': '28,089', '2014': '29,298', '2015': '30,657', '2016': '31,652', '2017': '33,221', '2018': '37,235', '2019': '40,126', '2020': '42,768'}}, {'country': 'Malta', 'years': {'2011': '1,037', '2012': '1,059', '2013': '1,043', '2014': '1,122', '2015': '1,225', '2016': ':', '2017': '1,641', '2018': '1,744', '2019': '1,625', '2020': '1,717'}}, {'country': 'Netherlands', 'years': {'2011': '66,410', '2012': '69,577', '2013': '70,960', '2014': '73,131', '2015': '76,439', '2016': '79,548', '2017': '80,967', '2018': '85,396', '2019': '89,134', '2020': '92,412'}}, {'country': 'Austria', 'years': {'2011': '22,496', '2012': '22,766', '2013': '22,348', '2014': '22,154', '2015': '22,370', '2016': '22,831', '2017': '22,911', '2018': '23,522', '2019': '23,202', '2020': '23,631'}}, {'country': 'Poland', 'years': {'2011': '69,001', '2012': '73,704', '2013': '79,653', '2014': '85,552', '2015': '91,529', '2016': '97,209', '2017': '106,912', '2018': '116,925', '2019': '127,662', '2020': '136,078'}}, {'country': 'Portugal', 'years': {'2011': '12,376', '2012': '12,419', '2013': '12,680', '2014': '12,975', '2015': '13,603', '2016': '14,257', '2017': '15,333', '2018': '16,441', '2019': '17,983', '2020': '18,162'}}, {'country': 'Romania', 'years': {'2011': '26,169', '2012': '29,142', '2013': '33,818', '2014': '35,508', '2015': '34,090', '2016': '35,174', '2017': '37,004', '2018': '39,166', '2019': '40,623', '2020': '44,191'}}, {'country': 'Slovenia', 'years': {'2011': '5,628', '2012': '5,908', '2013': '6,282', '2014': '6,826', '2015': '7,364', '2016': '7,795', '2017': '8,126', '2018': '8,521', '2019': '8,761', '2020': '9,052'}}, {'country': 'Slovakia', 'years': {'2011': '12,286', '2012': '12,391', '2013': '13,258', '2014': '15,585', '2015': '16,171', '2016': '16,849', '2017': '18,844', '2018': '20,985', '2019': '22,906', '2020': '24,254'}}, {'country': 'Finland', 'years': {'2011': '10,933', '2012': '11,186', '2013': '11,684', '2014': '11,921', '2015': '12,050', '2016': '12,190', '2017': '12,633', '2018': '13,084', '2019': '13,428', '2020': '13,960'}}, {'country': 'Sweden', 'years': {'2011': '47,372', '2012': '49,044', '2013': '47,827', '2014': '48,908', '2015': '49,906', '2016': '51,338', '2017': '52,335', '2018': '53,439', '2019': '54,847', '2020': '56,277'}}, {'country': 'Iceland', 'years': {'2011': '936', '2012': '975', '2013': '1,023', '2014': '1,111', '2015': '1,133', '2016': '1,209', '2017': '1,248', '2018': '1,256', '2019': '1,291', '2020': '1,355'}}, {'country': 'Norway', 'years': {'2011': '11,232', '2012': '11,553', '2013': '11,913', '2014': '11,933', '2015': '12,453', '2016': '12,305', '2017': '12,582', '2018': '12,811', '2019': '13,104', '2020': '13,536'}}, {'country': 'Switzerland', 'years': {'2011': ':', '2012': ':', '2013': '19,117', '2014': '19,859', '2015': '20,367', '2016': '20,474', '2017': '20,838', '2018': '21,196', '2019': '21,690', '2020': '21,905'}}, {'country': 'United Kingdom', 'years': {'2011': '158,305', '2012': '164,865', '2013': '175,060', '2014': '186,435', '2015': '199,435', '2016': '211,485', '2017': '218,260', '2018': '221,995', '2019': ':', '2020': ':'}}, {'country': 'North Macedonia', 'years': {'2011': '1,110', '2012': '1,193', '2013': '1,168', '2014': '1,233', '2015': '1,268', '2016': '1,363', '2017': '1,472', '2018': '1,654', '2019': '1,797', '2020': '1,908'}}, {'country': 'Türkiye', 'years': {'2011': '37,067', '2012': '41,467', '2013': '42,891', '2014': '43,276', '2015': '44,406', '2016': '43,946', '2017': '44,959', '2018': '45,354', '2019': '47,440', '2020': '50,460'}}]
+       var years = ["2011", "2012", "2013", "2014", "2015", "2016", "2017", "2018", "2019", "2020"];
+       var countries = data.map(d => d.country);
+       document.addEventListener("DOMContentLoaded", function () {
+        var countrySelector = document.querySelector(".country-selector");
+        var optionsContainer = document.querySelector(".options-container");
+
+        var maxAllowedClicks = 7;
+        var currentClickCount = 0;
+
+        countries.forEach(function (country) {
+          if (country !== "EU27") {
+            var option = document.createElement("div");
+            option.classList.add("option");
+            option.style.fontFamily = 'Roboto';
+            option.textContent = country; 
+            optionsContainer.appendChild(option);
+
+            option.addEventListener("click", function () {
+
+  if (option.classList.contains("selected")) {
+    option.classList.remove("selected");
+    currentClickCount--; 
+  } else {
+    
+    if (currentClickCount < maxAllowedClicks) {
+      option.classList.add("selected");
+      currentClickCount++; 
+    } else {
+        return; 
+    }
+  }
+
+  // Update the selected countries array and visualization
+  var selectedOptions = optionsContainer.querySelectorAll(".option.selected");
+  var selectedCountries = Array.from(selectedOptions).map(
+    (option) => option.textContent
+  );
+
+  updatescatter(selectedCountries);
+});
+
+          }
+        });
+
+        document
+          .querySelector(".select-box")
+          .addEventListener("click", function () {
+            optionsContainer.style.display =
+              optionsContainer.style.display === "none" ? "block" : "none";
+          });
+
+        // Close the dropdown if clicked outside
+        document.addEventListener("click", function (e) {
+          if (!countrySelector.contains(e.target)) {
+            optionsContainer.style.display = "none";
+          }
+        });
+      });
+
+
+
+var margin = {top: 0, right:  window.innerWidth * 0.15, bottom: 50, left: window.innerWidth * 0.1},
+width = window.innerWidth * 0.55,
+        height = window.innerHeight * 0.65;
+
+d3.select("#my_dataviz").select("svg").remove();
+
+var svg = d3.select("#my_dataviz")
+  .append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+    .style("position", "absolute")
+    .style("top", "110px")
+  .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+
+
+    function updatescatter(selectedCountries) {
+      if(selectedCountries.length === 0){
+        selectedCountries.push('EU')
+      }
+   
+    svg.selectAll("*").remove();
+    svg.append("text")
+          .attr("class", "x label")
+          .attr("text-anchor", "end")
+          .attr("x", width/2)
+          .attr("y", height + 46)
+          .text("Years")
+          .style("font-family",'Roboto');
+
+        svg.append("text")
+          .attr("class", "y label")
+          .attr("text-anchor", "end")
+          .attr("x", -height/3)
+          .attr("y", -90)
+          .attr("dy", ".15em")
+          .attr("transform", "rotate(-90)")
+          .text("Number of Companies")
+          .style("font-family",'Roboto');
+          
+    const euColor = "#007bff"; 
+    const colorPalette = d3.schemeTableau10; 
+    let nonEUCountries = selectedCountries.filter(country => country !== "EU");
+
+
+    var colorScale = d3.scaleOrdinal()
+        .domain(nonEUCountries)
+        .range(colorPalette.slice(0, nonEUCountries.length));
+
+    const preparedData = data
+        .filter(d => selectedCountries.includes(d.country))
+        .map(d => ({
+            country: d.country,
+            years: Object.entries(d.years).map(([year, value]) => ({
+                year: +year,
+                value: value === ':' ? null : parseInt(value.replace(/,/g, ''), 10)
+            })).filter(d => !isNaN(d.year) && d.value !== null) 
+        }));
+    
+   
+    let maxValue = d3.max(preparedData, d => d3.max(d.years, year => year.value));
+
+
+    var x = d3.scaleLinear()
+        .domain([2011, 2020])
+        .range([10, width]);
+
+    var y = d3.scaleLinear()
+        .domain([0, maxValue])
+        .range([height-10 , 10]).nice();
+
+   
+    svg.append("g")
+        .attr("transform", "translate(0," + height + ")")
+        .call(d3.axisBottom(x).tickFormat(d3.format("d"))) .selectAll("text") 
+    .style("font-family", "Roboto");
+
+    svg.append("g")
+        .call(d3.axisLeft(y)) .selectAll("text") 
+    .style("font-family", "Roboto");
+
+    var tooltip = d3.select("body").append("div")
+    .attr("class", "tooltip")
+    .style("opacity", 0)
+    .style("background-color", "rgba(255, 255, 255, 1)") 
+    .style("border", "solid 1px #ddd") 
+    .style("border-radius", "5px")
+    .style("padding", "10px")
+    .style("box-shadow", "0px 0px 10px rgba(0,0,0,0.5)") 
+    .style("color", "#333")
+    .style("font-size", "14px")
+    .style("font-family",'Roboto');
+
+
+    var legendPadding = {left: 5, top: 10, right: 5, bottom: 5};
+var legendItemHeight = 35; 
+var legendWidth = 250; 
+var legendHeight = (preparedData.length) * legendItemHeight + legendPadding.top + legendPadding.bottom;
+
+
+var legend = svg.append("g")
+    .attr("class", "legend")
+    .attr("transform", "translate(" + (width + 40) + ", 0)")
+    ;
+   
+
+legend.append("rect")
+    .attr("x", -legendPadding.left)
+    .attr("y", -legendPadding.top)
+    .attr("width", legendWidth)
+    .attr("height", legendHeight)
+    .attr("fill", "#f9f9f9") 
+    .attr("stroke", "#ccc")
+    .attr("stroke-width", 1)
+    .attr("rx", 5) 
+    .attr("ry", 5); 
+
+
+var legendItems = legend.selectAll("g.legend-item")
+    .data(preparedData)
+    .enter().append("g")
+    .attr("class", "legend-item")
+    .attr("transform", function(d, i) { return "translate(0," + (i * legendItemHeight + legendPadding.top) + ")"; });
+
+legendItems.append("circle")
+    .attr("cx", 10)
+    .attr("cy", 10)
+    .attr("r", 5)
+    .classed("legend-circle",true)
+    .attr("fill", d => d.country === "EU" ? euColor : colorScale(d.country));
+
+    var resetTextY = legendHeight + legendPadding.bottom + 20; 
+
+    var buttonWidth = 90; 
+var buttonHeight = 15; 
+var buttonX = 3; 
+var buttonY = resetTextY - 15; 
+var resetButton = legend.append("rect")
+    .attr("x", buttonX)
+    .attr("y", buttonY)
+    .attr("width", buttonWidth)
+    .attr("height", buttonHeight)
+    .attr("fill", "#007bff") 
+    .attr("stroke", "#0056b3") 
+    .attr("rx", 10) 
+    .attr("ry", 10) 
+    .classed("resetbutton",true)
+    .style("cursor", "pointer")
+    .style("visibility", "hidden");
+
+    var resetButtonText = legend.append("text")
+    .attr("x", buttonX + buttonWidth / 2) 
+    .attr("y", buttonY + buttonHeight / 2)
+    .attr("text-anchor", "middle") 
+    .attr("dominant-baseline", "central") 
+    .style("cursor", "pointer")
+    .style("fill", "white") 
+    .text("Reset Selected")
+    .style("font-size","13px")
+    .classed("textreset",true)
+    .style("visibility", "hidden")
+    .style("font-family",'Roboto')
+    .on("click", function() {
+       activeCountries = [];
+       resetButtonText.style("visibility", "hidden");
+       resetButton.style("visibility", "hidden");
+        svg.selectAll(".dot")
+            .style("opacity", 1)
+            .attr("r", 5)
+            .classed("no-hover", false); 
+            legendItems.selectAll("text")
+            .style("text-shadow", "");
+    });
+
+
+    var activeCountry = null;
+    let activeCountries = [];
+
+    function updateButtonVisibility() {
+    var visibility = activeCountries.length > 0 ? "visible" : "hidden";
+    resetButton.style("visibility", visibility);
+    resetButtonText.style("visibility", visibility);
+}
+
+
+
+    function highlightDots(event, d) {
+        updateButtonVisibility();
+    svg.selectAll(".dot")
+        .style("opacity", function() {
+
+            const dotCountry = d3.select(this).attr("class").split(" ")[1]; 
+            if (activeCountries.includes(dotCountry)) {
+                return 1; 
+            }
+            return 0.1;
+        });
+
+
+    if (!activeCountries.includes(d.country)) {
+        svg.selectAll(".dot." + d.country.replace(/\s+/g, ''))
+            .style("opacity", 1)
+            .attr("r", 12);
+    }
+
+
+    activeCountries.forEach(activeCountry => {
+        svg.selectAll(".dot." + activeCountry.replace(/\s+/g, ''))
+            .style("opacity", 1)
+            .attr("r", 12);
+    });
+}
+
+
+function toggleHighlight(event, d) {
+
+    const countryIndex = activeCountries.indexOf(d.country);
+    const textElement = d3.select(event.currentTarget);
+    if (countryIndex > -1) {
+       
+        activeCountries.splice(countryIndex, 1);
+        textElement.classed("has-glow", true);
+        updateButtonVisibility();
+        
+    } 
+
+    else {
+        activeCountries.push(d.country);
+        textElement.classed("has-glow", false);
+        updateButtonVisibility();
+    }
+
+    svg.selectAll(".dot")
+        .style("opacity", 0.2   ) 
+        .attr("r", 5)
+        .classed("no-hover", true);
+
+
+    activeCountries.forEach(activeCountry => {
+        svg.selectAll(".dot." + activeCountry.replace(/\s+/g, ''))
+            .style("opacity", 1)
+            .attr("r", 12)
+            .classed("no-hover", false);
+    });
+
+    if (activeCountries.length === 0) {
+    
+        resetDots();
+    }
+   
+}
+
+function resetDots() {
+    updateButtonVisibility();
+    svg.selectAll(".dot")
+        .style("opacity", 0.1) 
+        .attr("r", 5)
+        .classed("no-hover", true);
+
+    activeCountries.forEach(activeCountry => {
+        svg.selectAll(".dot." + activeCountry.replace(/\s+/g, ''))
+            .style("opacity", 1)
+            .attr("r", 12)
+            .classed("no-hover", false);
+    });
+
+    if (activeCountries.length === 0) {
+        svg.selectAll(".dot")
+            .style("opacity", 1)
+            .attr("r", 5)
+            .classed("no-hover", false);
+    }
+   
+}
+
+
+function toggleGlow(event, d) {
+  
+    const textElement = d3.select(event.currentTarget);
+    
+ 
+    const glowClass = "has-glow";
+    
+    
+    const hasGlow = textElement.classed(glowClass);
+    
+   
+    if (hasGlow) {
+    
+        textElement.classed(glowClass, false);
+        textElement.style("text-shadow", "");
+    } else {
+      
+        textElement.classed(glowClass, true);
+        const glowEffect = "0 0 5px white, 0 0 5px blue";
+        textElement.style("text-shadow", glowEffect);
+    }
+}
+
+ 
+
+
+
+legendItems.append("text")
+    .attr("x", 20)
+    .attr("y", 15)
+    .attr("dy", ".35em")
+    .attr("text-anchor", "start")
+    .classed("textLegend", true)
+    .each(function(d) {
+        var text = d3.select(this),
+            words = d.country.split(/\s+/),
+            tspan = text.text(null).selectAll("tspan")
+            .data(words)
+            .enter().append("tspan")
+            .attr("x", 20)
+            .attr("dy", function(d, i) { return i ? "1.2em" : 0; }) // This moves the second line down
+            .text(function(d) { return d; });
+
+        if (words.length > 1) {
+            // Adjust the initial y position of the first tspan if there are two lines
+            tspan.attr("y", 5);
+        }
+    })
+    .style("cursor", "pointer")
+    .on("mouseover", highlightDots)
+    .on("mouseout", resetDots)
+    .on("click", function(event, d) {
+        toggleHighlight(event, d);
+        updateButtonVisibility(); 
+        toggleGlow(event, d);
+    }); 
+
+
+
+    preparedData.forEach(function(countryData) {
+
+        var color = countryData.country === "EU" ? euColor : colorScale(countryData.country);
+
+        console.log(activeCountries)
+
+svg.selectAll(".dot." + countryData.country.replace(/\s+/g, ''))
+    .data(countryData.years)
+    .enter().append("circle")
+    .attr("class", function(d) { return "dot " + countryData.country.replace(/\s+/g, ''); })
+    .attr("cx", function(d) { return x(d.year); })
+    .attr("cy", function(d) { return y(d.value); })
+    .attr("r", 5)
+    .attr("fill", color)
+    .on("mouseover", function(event, d) {
+
+        if (activeCountries.length === 0 ||  activeCountries.includes(countryData.country)) {
+            var lighterColor = d3.rgb(color).brighter();
+
+            d3.select(this)
+                .transition()
+                .duration(300)
+                .attr("r", 12)
+                .attr("fill", lighterColor.toString());
+
+            tooltip.transition()
+                .duration(200)
+                .style("opacity", 1);
+            tooltip.html("Country: " + countryData.country + "<br/>Year: " + d.year + "<br/>Value: " + d.value.toLocaleString())
+                .style("left", (event.pageX + 20) + "px")
+                .style("top", (event.pageY - 38) + "px");
+        }
+    })
+    .on("mouseout", function(d) {
+
+        if (activeCountries.length === 0) {
+            d3.select(this)
+                .transition()
+                .duration(200)
+                .attr("r", 5)
+                .style("opacity", 1)
+                .attr("fill", color);
+
+            tooltip.transition()
+                .duration(200)
+                .style("opacity", 0);
+        }
+        
+        else if (activeCountries.includes(countryData.country)) {
+            d3.select(this)
+                .transition()
+                .duration(200)
+
+                .style("opacity", 1)
+                .attr("fill", color);
+
+
+            tooltip.transition()
+                .duration(200)
+                .style("opacity", 0);
+        }
+    });
+
+    });
+}
+
+        updatescatter(["EU"]);
+    </script>
+</body>
+</html>
+
+
+
+    </script>
+</body>
+</html>
