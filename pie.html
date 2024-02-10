@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Data Visualization</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css"
+    />
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body,
+      html {
+        margin: 0;
+        margin-top: 0;
+        padding: 0;
+      }
+      text {
+        font-family: "Roboto";
+      }
+      .tooltip {
+        border: 1px solid #ddd; /* Light grey border */
+        background-color: #f9f9f9; /* Light background */
+        padding: 15px;
+        border-radius: 5px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+        pointer-events: none; /* Ignore pointer events */
+      }
+
+      .tooltip strong {
+        font-weight: bold;
+        color: #007bff; /* Bootstrap primary color for example */
+      }
+
+      .tooltip span {
+        color: #dc3545; /* Bootstrap danger color for contrast */
+      }
+
+      .time-traveler {
+        position: fixed;
+        bottom: 5vh;
+        left: 50%;
+        bottom: 10%;
+        transform: translateX(-50%);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 30vw;
+        height: 5vh;
+        padding: 1vh;
+        background-color: #d4e6f4;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+      .selection-container {
+        padding-top: 5vh;
+        padding-left: 5vw;
+        display: flex;
+        justify-content: start;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .dropdown {
+        position: relative;
+        display: inline-block;
+        width: 25vw;
+        vertical-align: top;
+        font-family: "Arial", sans-serif; /* Use a modern font */
+      }
+
+      .dropdown-select {
+        border: 1px solid #ccc;
+        padding: 10px;
+        background-color: #f9f9f9;
+        cursor: pointer;
+        width: 100%;
+        border-radius: 5px; /* Rounded corners for the dropdown */
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+      }
+
+      .dropdown-list {
+        display: none;
+        position: absolute;
+        background-color: #ffffff;
+        box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.2);
+        padding: 10px;
+        z-index: 1;
+        width: 100%;
+        max-height: 200px;
+        overflow-y: auto;
+        border-radius: 5px; /* Match the border radius of dropdown select */
+        margin-top: 2px; /* Slight gap between select box and list */
+      }
+
+      .dropdown-list div {
+        padding: 8px 10px;
+        border-bottom: 1px solid #eee; /* Separate options with a line */
+        cursor: pointer;
+      }
+
+      .dropdown-list div:hover {
+        background-color: #f2f2f2; /* Highlight on hover */
+      }
+
+      .arrow {
+        float: right;
+        margin-left: 5px; /* Space between text and arrow */
+      }
+
+      .arrow.down {
+        border: solid black;
+        border-width: 0 2px 2px 0;
+        display: inline-block;
+        padding: 3px;
+        transform: rotate(45deg);
+        -webkit-transform: rotate(45deg);
+      }
+
+      /* Additional styles for responsiveness and positioning */
+      @media (max-width: 768px) {
+        .selection-container {
+          padding-left: 5%;
+          width: auto;
+        }
+
+        .dropdown {
+          width: 50%; /* Adjust dropdown width on smaller screens */
+        }
+
+        .dropdown-select,
+        .dropdown-list {
+          width: 100%; /* Ensure dropdown list matches the width of the select box on all screens */
+        }
+      }
+
+      .button {
+        cursor: pointer;
+        border: none;
+        background-color: transparent;
+        font-size: 14px;
+        margin: 5px;
+      }
+      .year-display,
+      .country-display {
+        font-size: 18px;
+        font-family: "roboto";
+        margin: 10px 0;
+      }
+
+      #my_dataviz {
+        max-width: 1060px;
+        margin: auto;
+      }
+      @media (max-width: 768px) {
+        .country-navigator {
+          top: 50% !important;
+          right: 10%;
+        }
+        .time-traveler {
+          left: 10%;
+          width: 50%;
+        }
+      }
+      svg {
+        top: 10% !important;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="my_dataviz"></div>
+    <div class="time-traveler">
+      <button class="button" id="prevYear">
+        <i class="fas fa-arrow-left"></i>
+      </button>
+      <span class="year-display">Year: 2014</span>
+      <button class="button" id="nextYear">
+        <i class="fas fa-arrow-right"></i>
+      </button>
+    </div>
+    <div class="selection-container">
+      <div class="dropdown">
+        <div class="dropdown-select" id="countryDropdown">
+          Select a country <span class="arrow down"></span>
+        </div>
+        <div class="dropdown-list" id="countryList">
+          <!-- years will be added dynamically through JavaScript -->
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let width = window.innerWidth * 1,
+        height = window.innerHeight * 0.8,
+        margin = {
+          top: window.innerHeight * 0.05,
+          right: window.innerHeight * 0.1,
+          bottom: window.innerHeight * 0.05,
+          left: window.innerWidth * 0.05,
+        };
+
+      // Remove any existing SVG to prevent duplicates
+      d3.select("#my_dataviz").select("svg").remove();
+
+      // Create SVG element
+      var svg = d3
+        .select("#my_dataviz")
+        .append("svg")
+        .attr(
+          "viewBox",
+          "0 0 " +
+            (width + margin.left + margin.right) +
+            " " +
+            (height + margin.top + margin.bottom)
+        )
+        .attr("preserveAspectRatio", "xMinYMin meet")
+        .style("position", "absolute")
+        .style("top", "20px")
+        .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+      // Data loading and processing
+      var data = [
+        {
+          country: "EU",
+          years: {
+            2014: {
+              totM: "5,307.8",
+              totFM: "1,029.0",
+              prM: 83.8,
+              prFM: "16.2",
+            },
+            2015: {
+              totM: "5,479.4",
+              totFM: "1,078.5",
+              prM: 83.6,
+              prFM: "16.4",
+            },
+            2016: {
+              totM: "5,742.7",
+              totFM: "1,175.4",
+              prM: 83.0,
+              prFM: "17.0",
+            },
+            2017: { totM: "5,951.6", totFM: "1,231.8", prM: 82.9, prFM: 17.1 },
+            2018: { totM: "6,277.6", totFM: "1,301.8", prM: 82.8, prFM: 17.2 },
+            2019: {
+              totM: "6,462.7",
+              totFM: "1,399.6",
+              prM: 82.2,
+              prFM: "17.8",
+            },
+            2020: {
+              totM: "6,871.5",
+              totFM: "1,558.0",
+              prM: "81.5",
+              prFM: "18.5",
+            },
+            2021: {
+              totM: "7,225.1",
+              totFM: "1,708.9",
+              prM: "80.9",
+              prFM: "19.1",
+            },
+            2022: {
+              totM: "7,608.2",
+              totFM: "1,770.6",
+              prM: "81.1",
+              prFM: "18.9",
+            },
+          },
+        },
+        {
+          country: "Belgium",
+          years: {
+            2014: { totM: "163.2", totFM: "29.2", prM: 84.8, prFM: "15.2" },
+            2015: { totM: "159.9", totFM: "28.5", prM: 84.9, prFM: "15.1" },
+            2016: { totM: "166.5", totFM: "27.3", prM: 85.9, prFM: "14.1" },
+            2017: { totM: "192.8", totFM: "35.8", prM: 84.4, prFM: 15.6 },
+            2018: { totM: "203.8", totFM: "41.1", prM: 83.2, prFM: 16.8 },
+            2019: { totM: "198.1", totFM: "41.2", prM: 82.8, prFM: "17.2" },
+            2020: { totM: "198.8", totFM: "42.0", prM: "82.6", prFM: "17.4" },
+            2021: { totM: "218.6", totFM: "53.4", prM: "80.4", prFM: "19.6" },
+            2022: { totM: "225.6", totFM: "51.8", prM: "81.3", prFM: "18.7" },
+          },
+        },
+        {
+          country: "Bulgaria",
+          years: {
+            2014: { totM: "51.0", totFM: "23.4", prM: 68.5, prFM: "31.5" },
+            2015: { totM: "61.0", totFM: "27.1", prM: 69.2, prFM: "30.8" },
+            2016: { totM: "65.3", totFM: "26.5", prM: 71.1, prFM: "28.9" },
+            2017: { totM: "68.3", totFM: "27.9", prM: 71.0, prFM: 29.0 },
+            2018: { totM: "72.4", totFM: "30.8", prM: 70.1, prFM: 29.9 },
+            2019: { totM: "72.7", totFM: "28.5", prM: 71.9, prFM: "28.1" },
+            2020: { totM: "74.2", totFM: "29.1", prM: "71.8", prFM: "28.2" },
+            2021: { totM: "77.6", totFM: "30.5", prM: "71.8", prFM: "28.2" },
+            2022: { totM: "85.9", totFM: "34.9", prM: "71.1", prFM: "28.9" },
+          },
+        },
+        {
+          country: "Czechia",
+          years: {
+            2014: { totM: "167.0", totFM: "18.3", prM: 90.1, prFM: "9.9" },
+            2015: { totM: "160.1", totFM: "17.4", prM: 90.2, prFM: "9.8" },
+            2016: { totM: "170.0", totFM: "18.9", prM: 90.0, prFM: "10.0" },
+            2017: { totM: "170.0", totFM: "19.2", prM: 89.9, prFM: 10.1 },
+            2018: { totM: "191.0", totFM: "20.6", prM: 90.3, prFM: 9.7 },
+            2019: { totM: "192.1", totFM: "21.9", prM: 89.8, prFM: "10.2" },
+            2020: { totM: "197.2", totFM: "22.6", prM: "89.7", prFM: "10.3" },
+            2021: { totM: "216.5", totFM: "24.2", prM: "90.0", prFM: "10.0" },
+            2022: { totM: "207.6", totFM: "25.3", prM: "89.1", prFM: "10.9" },
+          },
+        },
+        {
+          country: "Denmark",
+          years: {
+            2014: { totM: "99.2", totFM: "21.9", prM: 81.9, prFM: "18.1" },
+            2015: { totM: "96.7", totFM: "24.7", prM: 79.7, prFM: "20.3" },
+            2016: { totM: "105.4", totFM: "28.0", prM: 79.0, prFM: "21.0" },
+            2017: { totM: "110.8", totFM: "28.1", prM: 79.8, prFM: 20.2 },
+            2018: { totM: "111.2", totFM: "28.5", prM: 79.6, prFM: 20.4 },
+            2019: { totM: "115.4", totFM: "31.7", prM: 78.5, prFM: "21.5" },
+            2020: { totM: "116.4", totFM: "34.6", prM: "77.1", prFM: "22.9" },
+            2021: { totM: "125.0", totFM: "37.1", prM: "77.1", prFM: "22.9" },
+            2022: { totM: "133.4", totFM: "37.7", prM: "78.0", prFM: "22.0" },
+          },
+        },
+        {
+          country: "Germany",
+          years: {
+            2014: { totM: "1,183.4", totFM: "234.5", prM: 83.5, prFM: "16.5" },
+            2015: { totM: "1,226.9", totFM: "238.8", prM: 83.7, prFM: "16.3" },
+            2016: { totM: "1,285.6", totFM: "255.5", prM: 83.4, prFM: "16.6" },
+            2017: { totM: "1,298.3", totFM: "257.6", prM: 83.4, prFM: 16.6 },
+            2018: { totM: "1,349.9", totFM: "272.7", prM: 83.2, prFM: 16.8 },
+            2019: { totM: "1,403.7", totFM: "283.2", prM: 83.2, prFM: "16.8" },
+            2020: {
+              totM: "1,594.3",
+              totFM: "339.6",
+              prM: "82.4",
+              prFM: "17.6",
+            },
+            2021: {
+              totM: "1,622.7",
+              totFM: "390.5",
+              prM: "80.6",
+              prFM: "19.4",
+            },
+            2022: {
+              totM: "1,712.8",
+              totFM: "401.2",
+              prM: "81.0",
+              prFM: "19.0",
+            },
+          },
+        },
+        {
+          country: "Estonia",
+          years: {
+            2014: { totM: "19.8", totFM: "4.8", prM: 80.6, prFM: "19.4" },
+            2015: { totM: "20.8", totFM: "6.0", prM: 77.7, prFM: "22.3" },
+            2016: { totM: "26.2", totFM: "6.8", prM: 79.5, prFM: "20.5" },
+            2017: { totM: "27.3", totFM: "7.0", prM: 79.7, prFM: 20.3 },
+            2018: { totM: "27.6", totFM: "8.0", prM: 77.5, prFM: 22.5 },
+            2019: { totM: "29.1", totFM: "9.1", prM: 76.2, prFM: "23.8" },
+            2020: { totM: "31.3", totFM: "9.2", prM: "77.3", prFM: "22.7" },
+            2021: { totM: "31.2", totFM: "9.1", prM: "77.4", prFM: "22.6" },
+            2022: { totM: "33.8", totFM: "11.0", prM: "75.5", prFM: "24.5" },
+          },
+        },
+        {
+          country: "Ireland",
+          years: {
+            2014: { totM: "74.7", totFM: "20.0", prM: 78.9, prFM: "21.1" },
+            2015: { totM: "76.1", totFM: "19.2", prM: 79.8, prFM: "20.2" },
+            2016: { totM: "82.1", totFM: "22.5", prM: 78.5, prFM: "21.5" },
+            2017: { totM: "85.7", totFM: "23.0", prM: 78.9, prFM: 21.1 },
+            2018: { totM: "87.2", totFM: "20.0", prM: 81.4, prFM: 18.6 },
+            2019: { totM: "88.8", totFM: "24.1", prM: 78.6, prFM: "21.4" },
+            2020: { totM: "102.8", totFM: "26.8", prM: "79.3", prFM: "20.7" },
+            2021: { totM: "119.6", totFM: "30.0", prM: "79.9", prFM: "20.1" },
+            2022: { totM: "123.1", totFM: "34.3", prM: "78.2", prFM: "21.8" },
+          },
+        },
+        {
+          country: "Greece",
+          years: {
+            2014: { totM: "48.1", totFM: "12.7", prM: 79.2, prFM: "20.8" },
+            2015: { totM: "48.1", totFM: "10.1", prM: 82.7, prFM: "17.3" },
+            2016: { totM: "55.5", totFM: "11.5", prM: 82.9, prFM: "17.1" },
+            2017: { totM: "64.6", totFM: "11.7", prM: 84.6, prFM: 15.4 },
+            2018: { totM: "72.1", totFM: "13.2", prM: 84.5, prFM: 15.5 },
+            2019: { totM: "63.8", totFM: "16.1", prM: 79.8, prFM: "20.2" },
+            2020: { totM: "58.6", totFM: "21.6", prM: "73.0", prFM: "27.0" },
+            2021: { totM: "73.8", totFM: "19.7", prM: "79.0", prFM: "21.0" },
+            2022: { totM: "82.2", totFM: "20.9", prM: "79.7", prFM: "20.3" },
+          },
+        },
+        {
+          country: "Spain",
+          years: {
+            2014: { totM: "459.3", totFM: "102.4", prM: 81.8, prFM: "18.2" },
+            2015: { totM: "467.7", totFM: "101.8", prM: 82.1, prFM: "17.9" },
+            2016: { totM: "509.8", totFM: "105.5", prM: 82.8, prFM: "17.2" },
+            2017: { totM: "548.3", totFM: "107.9", prM: 83.6, prFM: 16.4 },
+            2018: { totM: "575.8", totFM: "120.4", prM: 82.7, prFM: 17.3 },
+            2019: { totM: "592.7", totFM: "138.7", prM: 81.0, prFM: "19.0" },
+            2020: { totM: "601.4", totFM: "141.3", prM: "81.0", prFM: "19.0" },
+            2021: { totM: "649.5", totFM: "156.8", prM: "80.6", prFM: "19.4" },
+            2022: { totM: "718.7", totFM: "158.1", prM: "82.0", prFM: "18.0" },
+          },
+        },
+        {
+          country: "France",
+          years: {
+            2014: { totM: "709.5", totFM: "143.9", prM: 83.1, prFM: "16.9" },
+            2015: { totM: "763.0", totFM: "143.7", prM: 84.2, prFM: "15.8" },
+            2016: { totM: "798.1", totFM: "170.6", prM: 82.4, prFM: "17.6" },
+            2017: { totM: "830.0", totFM: "187.9", prM: 81.5, prFM: 18.5 },
+            2018: { totM: "857.0", totFM: "204.2", prM: 80.8, prFM: 19.2 },
+            2019: { totM: "908.7", totFM: "222.9", prM: 80.3, prFM: "19.7" },
+            2020: { totM: "974.3", totFM: "244.5", prM: "79.9", prFM: "20.1" },
+            2021: { totM: "980.0", totFM: "258.8", prM: "79.1", prFM: "20.9" },
+            2022: { totM: "986.5", totFM: "231.2", prM: "81.0", prFM: "19.0" },
+          },
+        },
+        {
+          country: "Croatia",
+          years: {
+            2014: { totM: "37.4", totFM: "6.5", prM: 85.3, prFM: "14.7" },
+            2015: { totM: "36.7", totFM: "7.7", prM: 82.7, prFM: "17.3" },
+            2016: { totM: "45.3", totFM: "7.3", prM: 86.2, prFM: "13.8" },
+            2017: { totM: "46.7", totFM: "7.9", prM: 85.5, prFM: 14.5 },
+            2018: { totM: "49.6", totFM: "11.1", prM: 81.8, prFM: 18.2 },
+            2019: { totM: "44.3", totFM: "11.6", prM: 79.3, prFM: "20.7" },
+            2020: { totM: "51.4", totFM: "11.5", prM: "81.7", prFM: "18.3" },
+            2021: { totM: "48.2", totFM: "12.7", prM: "79.1", prFM: "20.9" },
+            2022: { totM: "55.3", totFM: "9.4", prM: "85.5", prFM: "14.5" },
+          },
+        },
+        {
+          country: "Italy",
+          years: {
+            2014: { totM: "622.6", totFM: "102.7", prM: 85.8, prFM: "14.2" },
+            2015: { totM: "624.3", totFM: "107.5", prM: 85.3, prFM: "14.7" },
+            2016: { totM: "642.8", totFM: "116.4", prM: 84.7, prFM: "15.3" },
+            2017: { totM: "649.0", totFM: "124.7", prM: 83.9, prFM: 16.1 },
+            2018: { totM: "698.2", totFM: "123.9", prM: 84.9, prFM: 15.1 },
+            2019: { totM: "696.6", totFM: "124.1", prM: 84.9, prFM: "15.1" },
+            2020: { totM: "698.4", totFM: "130.6", prM: "84.3", prFM: "15.7" },
+            2021: { totM: "712.7", totFM: "136.7", prM: "83.9", prFM: "16.1" },
+            2022: { totM: "755.6", totFM: "143.5", prM: "84.0", prFM: "16.0" },
+          },
+        },
+        {
+          country: "Cyprus",
+          years: {
+            2014: { totM: "8.4", totFM: "1.6", prM: 84.3, prFM: "15.7" },
+            2015: { totM: "7.7", totFM: "2.0", prM: 79.2, prFM: "20.8" },
+            2016: { totM: "7.6", totFM: "2.4", prM: 76.4, prFM: "23.6" },
+            2017: { totM: "9.0", totFM: "2.0", prM: 81.8, prFM: 18.2 },
+            2018: { totM: "10.5", totFM: "2.4", prM: 81.2, prFM: 18.8 },
+            2019: { totM: "9.2", totFM: "2.2", prM: 80.8, prFM: "19.2" },
+            2020: { totM: "10.5", totFM: "2.3", prM: "81.8", prFM: "18.2" },
+            2021: { totM: "13.4", totFM: "3.2", prM: "80.7", prFM: "19.3" },
+            2022: { totM: "16.1", totFM: "4.4", prM: "78.4", prFM: "21.6" },
+          },
+        },
+        {
+          country: "Latvia",
+          years: {
+            2014: { totM: "16.6", totFM: "5.9", prM: 73.7, prFM: "26.3" },
+            2015: { totM: "17.7", totFM: "6.7", prM: 72.4, prFM: "27.6" },
+            2016: { totM: "17.7", totFM: "6.5", prM: 73.1, prFM: "26.9" },
+            2017: { totM: "18.7", totFM: "6.5", prM: 74.1, prFM: 25.9 },
+            2018: { totM: "18.5", totFM: "4.7", prM: 79.9, prFM: 20.1 },
+            2019: { totM: "21.5", totFM: "6.9", prM: 75.7, prFM: "24.3" },
+            2020: { totM: "24.8", totFM: "7.6", prM: "76.5", prFM: "23.5" },
+            2021: { totM: "25.8", totFM: "7.5", prM: "77.5", prFM: "22.5" },
+            2022: { totM: "30.7", totFM: "9.0", prM: "77.2", prFM: "22.8" },
+          },
+        },
+        {
+          country: "Lithuania",
+          years: {
+            2014: { totM: "19.2", totFM: "3.9", prM: 83.1, prFM: "16.9" },
+            2015: { totM: "22.4", totFM: "5.8", prM: 79.5, prFM: "20.5" },
+            2016: { totM: "25.7", totFM: "8.6", prM: 75.0, prFM: "25.0" },
+            2017: { totM: "27.4", totFM: "9.6", prM: 74.1, prFM: 25.9 },
+            2018: { totM: "28.0", totFM: "9.7", prM: 74.2, prFM: 25.8 },
+            2019: { totM: "31.8", totFM: "10.2", prM: 75.7, prFM: "24.3" },
+            2020: { totM: "34.0", totFM: "10.5", prM: "76.4", prFM: "23.6" },
+            2021: { totM: "40.0", totFM: "12.4", prM: "76.3", prFM: "23.7" },
+            2022: { totM: "47.7", totFM: "14.2", prM: "77.1", prFM: "22.9" },
+          },
+        },
+        {
+          country: "Luxembourg",
+          years: {
+            2014: { totM: "11.2", totFM: "1.5", prM: 88.2, prFM: "11.8" },
+            2015: { totM: "11.1", totFM: "1.8", prM: 86.2, prFM: "13.8" },
+            2016: { totM: "11.9", totFM: "1.7", prM: 87.5, prFM: "12.5" },
+            2017: { totM: "12.5", totFM: "1.6", prM: 88.4, prFM: 11.6 },
+            2018: { totM: "14.5", totFM: "2.3", prM: 86.4, prFM: 13.6 },
+            2019: { totM: "15.2", totFM: "2.8", prM: 84.5, prFM: "15.5" },
+            2020: { totM: "14.9", totFM: "3.7", prM: "80.0", prFM: "20.0" },
+            2021: { totM: "16.5", totFM: "4.0", prM: "80.3", prFM: "19.7" },
+            2022: { totM: "19.1", totFM: "5.0", prM: "79.3", prFM: "20.7" },
+          },
+        },
+        {
+          country: "Hungary",
+          years: {
+            2014: { totM: "127.4", totFM: "16.8", prM: 88.3, prFM: "11.7" },
+            2015: { totM: "134.5", totFM: "18.4", prM: 87.9, prFM: "12.1" },
+            2016: { totM: "137.4", totFM: "20.9", prM: 86.8, prFM: "13.2" },
+            2017: { totM: "143.6", totFM: "14.3", prM: 90.9, prFM: 9.1 },
+            2018: { totM: "151.5", totFM: "14.3", prM: 91.4, prFM: 8.6 },
+            2019: { totM: "136.3", totFM: "16.1", prM: 89.4, prFM: "10.6" },
+            2020: { totM: "149.8", totFM: "21.1", prM: "87.7", prFM: "12.3" },
+            2021: { totM: "156.6", totFM: "25.4", prM: "86.0", prFM: "14.0" },
+            2022: { totM: "168.1", totFM: "26.4", prM: "86.4", prFM: "13.6" },
+          },
+        },
+        {
+          country: "Malta",
+          years: {
+            2014: { totM: "5.8", totFM: "1.0", prM: 84.8, prFM: "15.2" },
+            2015: { totM: "6.3", totFM: "1.3", prM: 83.0, prFM: "17.0" },
+            2016: { totM: "7.2", totFM: "1.0", prM: 87.7, prFM: "12.3" },
+            2017: { totM: "8.5", totFM: "1.0", prM: 89.2, prFM: 10.8 },
+            2018: { totM: "9.5", totFM: "2.0", prM: 82.3, prFM: 17.7 },
+            2019: { totM: "10.5", totFM: "1.3", prM: 89.1, prFM: "10.9" },
+            2020: { totM: "10.2", totFM: "1.2", prM: "89.3", prFM: "10.7" },
+            2021: { totM: "9.8", totFM: "2.9", prM: "77.3", prFM: "22.7" },
+            2022: { totM: "11.2", totFM: "2.5", prM: "81.8", prFM: "18.2" },
+          },
+        },
+        {
+          country: "Netherlands",
+          years: {
+            2014: { totM: "342.4", totFM: "52.0", prM: 86.8, prFM: "13.2" },
+            2015: { totM: "356.9", totFM: "57.5", prM: 86.1, prFM: "13.9" },
+            2016: { totM: "363.0", totFM: "64.3", prM: 85.0, prFM: "15.0" },
+            2017: { totM: "363.3", totFM: "70.6", prM: 83.7, prFM: 16.3 },
+            2018: { totM: "394.4", totFM: "74.5", prM: 84.1, prFM: 15.9 },
+            2019: { totM: "417.4", totFM: "87.2", prM: 82.7, prFM: "17.3" },
+            2020: { totM: "434.2", totFM: "92.9", prM: "82.4", prFM: "17.6" },
+            2021: { totM: "511.8", totFM: "108.8", prM: "82.5", prFM: "17.5" },
+            2022: { totM: "552.1", totFM: "133.1", prM: "80.6", prFM: "19.4" },
+          },
+        },
+        {
+          country: "Austria",
+          years: {
+            2014: { totM: "129.4", totFM: "20.1", prM: 86.6, prFM: "13.4" },
+            2015: { totM: "142.9", totFM: "23.9", prM: 85.7, prFM: "14.3" },
+            2016: { totM: "148.5", totFM: "30.7", prM: 82.9, prFM: "17.1" },
+            2017: { totM: "158.4", totFM: "29.5", prM: 84.3, prFM: 15.7 },
+            2018: { totM: "156.5", totFM: "35.2", prM: 81.6, prFM: 18.4 },
+            2019: { totM: "146.9", totFM: "37.7", prM: 79.6, prFM: "20.4" },
+            2020: { totM: "154.2", totFM: "39.3", prM: "79.7", prFM: "20.3" },
+            2021: { totM: "156.0", totFM: "36.5", prM: "81.0", prFM: "19.0" },
+            2022: { totM: "177.9", totFM: "42.7", prM: "80.7", prFM: "19.3" },
+          },
+        },
+        {
+          country: "Poland",
+          years: {
+            2014: { totM: "355.9", totFM: "58.1", prM: 86.0, prFM: "14.0" },
+            2015: { totM: "366.8", totFM: "57.9", prM: 86.4, prFM: "13.6" },
+            2016: { totM: "369.6", totFM: "63.2", prM: 85.4, prFM: "14.6" },
+            2017: { totM: "384.9", totFM: "67.1", prM: 85.2, prFM: 14.8 },
+            2018: { totM: "418.3", totFM: "68.0", prM: 86.0, prFM: 14.0 },
+            2019: { totM: "438.3", totFM: "73.7", prM: 85.6, prFM: "14.4" },
+            2020: { totM: "471.4", totFM: "83.6", prM: "84.9", prFM: "15.1" },
+            2021: { totM: "496.0", totFM: "90.8", prM: "84.5", prFM: "15.5" },
+            2022: { totM: "500.4", totFM: "100.3", prM: "83.3", prFM: "16.7" },
+          },
+        },
+        {
+          country: "Portugal",
+          years: {
+            2014: { totM: "115.5", totFM: "20.7", prM: 84.8, prFM: "15.2" },
+            2015: { totM: "107.6", totFM: "22.9", prM: 82.4, prFM: "17.6" },
+            2016: { totM: "111.6", totFM: "24.4", prM: 82.0, prFM: "18.0" },
+            2017: { totM: "109.2", totFM: "23.3", prM: 82.4, prFM: 17.6 },
+            2018: { totM: "120.3", totFM: "25.7", prM: 82.4, prFM: 17.6 },
+            2019: { totM: "140.1", totFM: "30.3", prM: 82.2, prFM: "17.8" },
+            2020: { totM: "147.2", totFM: "39.4", prM: "78.9", prFM: "21.1" },
+            2021: { totM: "178.7", totFM: "46.7", prM: "79.3", prFM: "20.7" },
+            2022: { totM: "174.9", totFM: "44.8", prM: "79.6", prFM: "20.4" },
+          },
+        },
+        {
+          country: "Romania",
+          years: {
+            2014: { totM: "109.9", totFM: "30.1", prM: 78.5, prFM: "21.5" },
+            2015: { totM: "117.2", totFM: "44.0", prM: 72.7, prFM: "27.3" },
+            2016: { totM: "123.6", totFM: "44.1", prM: 73.7, prFM: "26.3" },
+            2017: { totM: "137.7", totFM: "47.7", prM: 74.3, prFM: 25.7 },
+            2018: { totM: "145.4", totFM: "45.1", prM: 76.3, prFM: 23.7 },
+            2019: { totM: "151.4", totFM: "46.4", prM: 76.5, prFM: "23.5" },
+            2020: { totM: "150.3", totFM: "53.2", prM: "73.8", prFM: "26.2" },
+            2021: { totM: "150.8", totFM: "52.8", prM: "74.0", prFM: "26.0" },
+            2022: { totM: "161.1", totFM: "54.3", prM: "74.8", prFM: "25.2" },
+          },
+        },
+        {
+          country: "Slovenia",
+          years: {
+            2014: { totM: "27.8", totFM: "4.4", prM: 86.4, prFM: "13.6" },
+            2015: { totM: "27.7", totFM: "5.3", prM: 83.8, prFM: "16.2" },
+            2016: { totM: "26.6", totFM: "5.6", prM: 82.7, prFM: "17.3" },
+            2017: { totM: "30.3", totFM: "5.9", prM: 83.6, prFM: 16.4 },
+            2018: { totM: "32.7", totFM: "6.5", prM: 83.4, prFM: 16.6 },
+            2019: { totM: "31.1", totFM: "7.5", prM: 80.5, prFM: "19.5" },
+            2020: { totM: "35.3", totFM: "7.3", prM: "82.8", prFM: "17.2" },
+            2021: { totM: "38.9", totFM: "7.7", prM: "83.4", prFM: "16.6" },
+            2022: { totM: "37.0", totFM: "7.9", prM: "82.4", prFM: "17.6" },
+          },
+        },
+        {
+          country: "Slovakia",
+          years: {
+            2014: { totM: "58.1", totFM: "8.0", prM: 87.9, prFM: "12.1" },
+            2015: { totM: "60.3", totFM: "8.2", prM: 88.0, prFM: "12.0" },
+            2016: { totM: "66.4", totFM: "7.1", prM: 90.3, prFM: "9.7" },
+            2017: { totM: "61.1", totFM: "10.3", prM: 85.6, prFM: 14.4 },
+            2018: { totM: "71.9", totFM: "10.8", prM: 86.9, prFM: 13.1 },
+            2019: { totM: "83.0", totFM: "13.5", prM: 86.0, prFM: "14.0" },
+            2020: { totM: "89.9", totFM: "16.9", prM: "84.2", prFM: "15.8" },
+            2021: { totM: "94.5", totFM: "16.5", prM: "85.1", prFM: "14.9" },
+            2022: { totM: "95.4", totFM: "16.8", prM: "85.1", prFM: "14.9" },
+          },
+        },
+        {
+          country: "Finland",
+          years: {
+            2014: { totM: "121.2", totFM: "31.8", prM: 79.2, prFM: "20.8" },
+            2015: { totM: "121.2", totFM: "34.7", prM: 77.7, prFM: "22.3" },
+            2016: { totM: "126.9", totFM: "33.8", prM: 79.0, prFM: "21.0" },
+            2017: { totM: "132.1", totFM: "33.9", prM: 79.6, prFM: 20.4 },
+            2018: { totM: "135.9", totFM: "33.7", prM: 80.1, prFM: 19.9 },
+            2019: { totM: "137.7", totFM: "36.8", prM: 78.9, prFM: "21.1" },
+            2020: { totM: "146.8", totFM: "44.7", prM: "76.7", prFM: "23.3" },
+            2021: { totM: "143.0", totFM: "45.0", prM: "76.1", prFM: "23.9" },
+            2022: { totM: "151.0", totFM: "47.2", prM: "76.2", prFM: "23.8" },
+          },
+        },
+        {
+          country: "Sweden",
+          years: {
+            2014: { totM: "223.9", totFM: "53.0", prM: 80.9, prFM: "19.1" },
+            2015: { totM: "238.2", totFM: "55.6", prM: 81.1, prFM: "18.9" },
+            2016: { totM: "246.1", totFM: "64.7", prM: 79.2, prFM: "20.8" },
+            2017: { totM: "263.2", totFM: "69.6", prM: 79.1, prFM: 20.9 },
+            2018: { totM: "274.1", totFM: "72.4", prM: 79.1, prFM: 20.9 },
+            2019: { totM: "286.3", totFM: "73.8", prM: 79.5, prFM: "20.5" },
+            2020: { totM: "298.9", totFM: "80.9", prM: "78.7", prFM: "21.3" },
+            2021: { totM: "318.0", totFM: "89.1", prM: "78.1", prFM: "21.9" },
+            2022: { totM: "345.2", totFM: "102.7", prM: "77.1", prFM: "22.9" },
+          },
+        },
+        {
+          country: "Iceland",
+          years: {
+            2014: { totM: "5.8", totFM: "1.5", prM: 79.5, prFM: "20.5" },
+            2015: { totM: "6.3", totFM: "1.9", prM: 77.0, prFM: "23.0" },
+            2016: { totM: "6.8", totFM: "1.9", prM: 78.1, prFM: "21.9" },
+            2017: { totM: "7.6", totFM: "1.6", prM: 83.0, prFM: 17.0 },
+            2018: { totM: "7.2", totFM: "1.5", prM: 83.1, prFM: 16.9 },
+            2019: { totM: "7.0", totFM: "1.7", prM: 80.8, prFM: "19.2" },
+            2020: { totM: "7.2", totFM: "1.9", prM: "79.1", prFM: "20.9" },
+            2021: { totM: "6.0", totFM: "1.9", prM: "75.8", prFM: "24.2" },
+            2022: { totM: "7.3", totFM: "1.9", prM: "79.7", prFM: "20.3" },
+          },
+        },
+        {
+          country: "Norway",
+          years: {
+            2014: { totM: "99.3", totFM: "19.8", prM: 83.4, prFM: "16.6" },
+            2015: { totM: "96.0", totFM: "22.2", prM: 81.2, prFM: "18.8" },
+            2016: { totM: "92.7", totFM: "19.3", prM: 82.7, prFM: "17.3" },
+            2017: { totM: "99.3", totFM: "22.8", prM: 81.3, prFM: 18.7 },
+            2018: { totM: "95.4", totFM: "27.0", prM: 77.9, prFM: 22.1 },
+            2019: { totM: "100.2", totFM: "26.0", prM: 79.4, prFM: "20.6" },
+            2020: { totM: "110.0", totFM: "26.4", prM: "80.6", prFM: "19.4" },
+            2021: { totM: "120.9", totFM: "28.6", prM: "80.9", prFM: "19.1" },
+            2022: { totM: "118.0", totFM: "29.2", prM: "80.2", prFM: "19.8" },
+          },
+        },
+        {
+          country: "Switzerland",
+          years: {
+            2014: { totM: "184.3", totFM: "29.5", prM: 86.2, prFM: "13.8" },
+            2015: { totM: "184.7", totFM: "30.5", prM: 85.8, prFM: "14.2" },
+            2016: { totM: "192.8", totFM: "34.1", prM: 85.0, prFM: "15.0" },
+            2017: { totM: "189.1", totFM: "33.9", prM: 84.8, prFM: 15.2 },
+            2018: { totM: "199.7", totFM: "33.9", prM: 85.5, prFM: 14.5 },
+            2019: { totM: "214.1", totFM: "42.5", prM: 83.4, prFM: "16.6" },
+            2020: { totM: "212.9", totFM: "41.6", prM: "83.7", prFM: "16.3" },
+            2021: { totM: "214.0", totFM: "41.7", prM: "83.7", prFM: "16.3" },
+            2022: { totM: "224.7", totFM: "42.3", prM: "84.1", prFM: "15.9" },
+          },
+        },
+        {
+          country: "United Kingdom",
+          years: {
+            2014: { totM: "1,276.4", totFM: "251.6", prM: 83.5, prFM: "16.5" },
+            2015: { totM: "1,361.3", totFM: "283.5", prM: 82.8, prFM: "17.2" },
+            2016: { totM: "1,406.2", totFM: "278.4", prM: 83.5, prFM: "16.5" },
+            2017: { totM: "1,371.3", totFM: "292.2", prM: 82.4, prFM: 17.6 },
+            2018: { totM: "1,460.1", totFM: "299.0", prM: 83.0, prFM: 17.0 },
+            2019: { totM: "1,523.8", totFM: "313.5", prM: 82.9, prFM: "17.1" },
+            2020: { totM: ":", totFM: ":", prM: ":", prFM: ":" },
+            2021: { totM: ":", totFM: ":", prM: ":", prFM: ":" },
+            2022: { totM: ":", totFM: ":", prM: ":", prFM: ":" },
+          },
+        },
+        {
+          country: "Montenegro",
+          years: {
+            2014: { totM: "4.2", totFM: ":", prM: 83.1, prFM: ":" },
+            2015: { totM: "4.5", totFM: ":", prM: 84.1, prFM: ":" },
+            2016: { totM: "4.1", totFM: ":", prM: 87.3, prFM: ":" },
+            2017: { totM: "4.0", totFM: "1.7", prM: 70.6, prFM: 29.4 },
+            2018: { totM: "3.5", totFM: "1.3", prM: 72.4, prFM: 27.6 },
+            2019: { totM: "3.5", totFM: ":", prM: 75.8, prFM: ":" },
+            2020: { totM: "4.6", totFM: ":", prM: "83.6", prFM: ":" },
+            2021: { totM: ":", totFM: ":", prM: ":", prFM: ":" },
+            2022: { totM: ":", totFM: ":", prM: ":", prFM: ":" },
+          },
+        },
+        {
+          country: "North Macedonia",
+          years: {
+            2014: { totM: "7.7", totFM: "3.1", prM: 71.2, prFM: "28.8" },
+            2015: { totM: "10.1", totFM: "2.8", prM: 78.3, prFM: "21.7" },
+            2016: { totM: "9.5", totFM: "3.6", prM: 72.7, prFM: "27.3" },
+            2017: { totM: "8.8", totFM: "3.3", prM: 73.0, prFM: 27.0 },
+            2018: { totM: "9.5", totFM: "3.0", prM: 75.9, prFM: 24.1 },
+            2019: { totM: "11.8", totFM: "3.8", prM: 75.6, prFM: "24.4" },
+            2020: { totM: "14.3", totFM: "4.3", prM: "76.7", prFM: "23.3" },
+            2021: { totM: ":", totFM: ":", prM: ":", prFM: ":" },
+            2022: { totM: ":", totFM: ":", prM: ":", prFM: ":" },
+          },
+        },
+        {
+          country: "Serbia",
+          years: {
+            2014: { totM: "43.2", totFM: "7.6", prM: 85.1, prFM: "14.9" },
+            2015: { totM: "47.5", totFM: "9.9", prM: 82.8, prFM: "17.2" },
+            2016: { totM: "49.4", totFM: "13.0", prM: 79.1, prFM: "20.9" },
+            2017: { totM: "50.4", totFM: "14.3", prM: 77.9, prFM: 22.1 },
+            2018: { totM: "55.5", totFM: "13.2", prM: 80.8, prFM: 19.2 },
+            2019: { totM: "58.8", totFM: "16.1", prM: 78.5, prFM: "21.5" },
+            2020: { totM: "59.9", totFM: "19.9", prM: "75.1", prFM: "24.9" },
+            2021: { totM: "72.5", totFM: "22.2", prM: "76.6", prFM: "23.4" },
+            2022: { totM: "75.6", totFM: "23.0", prM: "76.7", prFM: "23.3" },
+          },
+        },
+        {
+          country: "Türkiye",
+          years: {
+            2014: { totM: "255.2", totFM: "43.2", prM: 85.5, prFM: "14.5" },
+            2015: { totM: "279.9", totFM: "44.7", prM: 86.2, prFM: "13.8" },
+            2016: { totM: "285.7", totFM: "43.5", prM: 86.8, prFM: "13.2" },
+            2017: { totM: "301.3", totFM: "48.2", prM: 86.2, prFM: 13.8 },
+            2018: { totM: "302.6", totFM: "51.5", prM: 85.4, prFM: 14.6 },
+            2019: { totM: "309.2", totFM: "46.1", prM: 87.0, prFM: "13.0" },
+            2020: { totM: "302.4", totFM: "61.2", prM: "83.2", prFM: "16.8" },
+            2021: { totM: ":", totFM: ":", prM: ":", prFM: ":" },
+            2022: { totM: ":", totFM: ":", prM: ":", prFM: ":" },
+          },
+        },
+      ];
+      var currentYear = 2014;
+      var currentCountryIndex = 0;
+      var countries = [
+        "EU",
+        "Belgium",
+        "Bulgaria",
+        "Czechia",
+        "Denmark",
+        "Germany",
+        "Estonia",
+        "Ireland",
+        "Greece",
+        "Spain",
+        "France",
+        "Croatia",
+        "Italy",
+        "Cyprus",
+        "Latvia",
+        "Lithuania",
+        "Luxembourg",
+        "Hungary",
+        "Malta",
+        "Netherlands",
+        "Austria",
+        "Poland",
+        "Portugal",
+        "Romania",
+        "Slovenia",
+        "Slovakia",
+        "Finland",
+        "Sweden",
+        "Iceland",
+        "Norway",
+        "Switzerland",
+        "United Kingdom",
+        "Montenegro",
+        "North Macedonia",
+        "Serbia",
+        "Türkiye",
+      ];
+
+      function updateVisualization() {
+        // Locate the current country and its data for the selected year
+        var containerWidth = document.getElementById("my_dataviz").clientWidth;
+        var containerHeight =
+          document.getElementById("my_dataviz").clientHeight;
+
+        // Set up dimensions for the pie chart based on the container size.
+        var pieWidth = Math.min(containerWidth, containerHeight) * 0.9; // Use 90% of the smallest side
+        var pieHeight = pieWidth; // Keep the pie chart aspect ratio square
+        var radius = pieWidth / 2;
+        svg
+          .attr("width", pieWidth)
+          .attr("height", pieHeight)
+          .attr("viewBox", `0 0 ${pieWidth} ${pieHeight}`)
+          .attr("preserveAspectRatio", "xMidYMid meet");
+        var currentCountry = countries[currentCountryIndex];
+        var yearData = data.find((d) => d.country === currentCountry).years[
+          currentYear.toString()
+        ];
+        if (yearData.prM === ":" || yearData.prFM === ":") {
+          displayUnavailableContentImage(); // Call function to display the image
+        } else {
+          var pieData = [
+            {
+              gender: "Male",
+              value: parseFloat(yearData.prM),
+              total: yearData.totM,
+            },
+            {
+              gender: "Female",
+              value: parseFloat(yearData.prFM),
+              total: yearData.totFM,
+            },
+          ];
+
+          drawPieChart(pieData); // Draw the pie chart with the formatted data
+        }
+
+        function drawPieChart(data) {
+          // Clear previous contents
+          svg.selectAll("*").remove();
+
+          // Recalculate width and height to center the pie chart
+          var pieWidth = width / 4,
+            pieHeight = height / 1.7,
+            radius = Math.min(pieWidth, pieHeight);
+          svg
+            .attr("width", pieWidth)
+            .attr("height", pieHeight)
+            .attr("viewBox", `0 0 ${pieWidth} ${pieHeight}`)
+            .attr("preserveAspectRatio", "xMidYMid meet");
+          // Color scale
+          var color = d3.scaleOrdinal(d3.schemeCategory10);
+
+          // Create pie and arc generators
+          var pie = d3
+            .pie()
+            .sort(null)
+            .value(function (d) {
+              return d.value;
+            });
+
+          var arc = d3
+            .arc()
+            .outerRadius(radius - 5)
+            .innerRadius(0);
+
+          var labelArc = d3
+            .arc()
+            .outerRadius(radius - 40)
+            .innerRadius(radius - 40);
+
+          // Tooltip setup
+          var tooltip = d3
+            .select("body")
+            .append("div")
+            .attr("class", "tooltip") // Use this class for styling
+            .style("opacity", 0)
+            .style("position", "absolute")
+            .style("padding", "10px")
+            .style("border-radius", "5px")
+            .style("box-shadow", "0 2px 4px rgba(0,0,0,0.2)")
+            .style("background", "#fff")
+            .style("color", "#333");
+
+          // Move the center
+          var g = svg
+            .append("g")
+            .attr(
+              "transform",
+              `translate(${pieWidth * 2}, ${pieHeight / 1.5})`
+            );
+
+          // Draw the pie chart
+          var arcOver = d3
+            .arc()
+            .outerRadius(radius + 10)
+            .innerRadius(0);
+
+          var arcs = g
+            .selectAll(".arc")
+            .data(pie(data))
+            .enter()
+            .append("g")
+            .attr("class", "arc")
+            .on("mouseover", function (event, d) {
+              d3.select(this)
+                .select("path")
+                .transition()
+                .duration(200)
+                .attr("d", arcOver);
+
+              tooltip.transition().duration(200).style("opacity", 0.9);
+              tooltip
+                .html(
+                  `${d.data.gender}: ${
+                    d.data.value
+                  }%<br>Total: ${d.data.total.slice(0, -2)}${
+                    d.data.total.includes(",")
+                      ? "M"
+                      : d.data.total.endsWith("M")
+                      ? ""
+                      : "K"
+                  }`
+                )
+
+                // Assuming totals are in thousands
+                .style("left", event.pageX + 10 + "px")
+                .style("top", event.pageY - 10 + "px");
+            })
+
+            .on("mouseout", function (event, d) {
+              d3.select(this)
+                .select("path")
+                .transition()
+                .duration(200)
+                .attr("d", arc);
+
+              tooltip.transition().duration(500).style("opacity", 0);
+            });
+
+          arcs
+            .append("path")
+            .attr("d", arc)
+            .style("fill", function (d) {
+              return color(d.data.gender);
+            });
+
+          // Add labels
+          arcs
+            .append("text")
+            .attr("transform", function (d) {
+              return "translate(" + labelArc.centroid(d) + ")";
+            })
+            .attr("dy", ".35em")
+            .text(function (d) {
+              return d.data.gender;
+            })
+            .style("text-anchor", "middle")
+            .style("font-family", "Roboto");
+
+          // // Dynamic title based on the selected year and country
+          // svg.append("text")
+          //    .attr("x", (width / 2))
+          //    .attr("y", 0 )
+          //    .attr("text-anchor", "middle")
+          //    .style("font-size", "16px")
+          //    .style("text-decoration", "underline")
+          //    .text("Gender Distribution in " + countries[currentCountryIndex] + " - " + currentYear);
+        }
+      }
+      window.addEventListener("resize", updateVisualization);
+      function displayUnavailableContentImage() {
+        // Clear previous SVG contents
+        svg.selectAll("*").remove();
+
+        // Append an SVG image element to display the 'content unavailable' image
+        svg
+          .append("image")
+          .attr("xlink:href", "../logo/dataun.png")
+          .attr("width", width) // Set the width to the SVG width or any appropriate size
+          .attr("height", height) // Set the height to the SVG height or any appropriate size
+          .attr("x", -60) // Adjust position based on your SVG container
+          .attr("y", 0); // Adjust position based on your SVG container
+      }
+
+      // Event listeners for time travel
+      document
+        .getElementById("prevYear")
+        .addEventListener("click", function () {
+          if (currentYear > 2014) {
+            currentYear--;
+            document.querySelector(".year-display").innerText =
+              "Year: " + currentYear;
+            updateVisualization();
+          }
+        });
+
+      document
+        .getElementById("nextYear")
+        .addEventListener("click", function () {
+          if (currentYear < 2022) {
+            currentYear++;
+            document.querySelector(".year-display").innerText =
+              "Year: " + currentYear;
+            updateVisualization();
+          }
+        });
+
+      // Populate the dropdown with country options
+      function populateCountryDropdown() {
+        var countryListDiv = document.getElementById("countryList");
+        countries.forEach(function (country) {
+          var countryOption = document.createElement("div");
+          countryOption.innerText = country;
+          countryOption.addEventListener("click", function () {
+            var countryDropdown = document.getElementById("countryDropdown");
+            countryDropdown.innerHTML =
+              country + " <span class='arrow down'></span>";
+            currentCountryIndex = countries.indexOf(country);
+            updateVisualization();
+            // Close the dropdown list
+            document.getElementById("countryList").style.display = "none";
+          });
+          countryListDiv.appendChild(countryOption);
+        });
+      }
+
+      // Toggle dropdown list visibility
+      document
+        .getElementById("countryDropdown")
+        .addEventListener("click", function () {
+          var dropdownList = document.getElementById("countryList");
+          dropdownList.style.display =
+            dropdownList.style.display === "none" ? "block" : "none";
+        });
+
+      // Call this function to initialize the dropdown with countries
+      populateCountryDropdown();
+
+      // Clicking anywhere outside the dropdown should close it
+      window.addEventListener("click", function (event) {
+        if (!event.target.matches(".dropdown-select")) {
+          var dropdowns = document.getElementsByClassName("dropdown-list");
+          for (var i = 0; i < dropdowns.length; i++) {
+            var openDropdown = dropdowns[i];
+            if (openDropdown.style.display === "block") {
+              openDropdown.style.display = "none";
+            }
+          }
+        }
+      });
+      // Initial display update
+
+      updateVisualization(); // Initial visualization
+    </script>
+  </body>
+</html>

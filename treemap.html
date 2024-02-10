@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html>
+
+    <meta charset="utf-8" />
+    <title>Data Visualization</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css"
+    />
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <link
+    href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap"
+    rel="stylesheet"
+  />
+    <style>
+      body {
+padding: 0;
+margin: 0;
+      }
+      text{
+        font-family: 'roboto';
+      }
+.selection-container {
+        padding-top: 5vh;
+        padding-left: 5vw;
+        display: flex;
+        justify-content: start;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .dropdown {
+        position: relative;
+        display: inline-block;
+        width: 25vw;
+        vertical-align: top;
+        font-family: "Arial", sans-serif;
+      }
+
+      .dropdown-select {
+        border: 1px solid #ccc;
+        padding: 10px;
+        background-color: #f9f9f9;
+        cursor: pointer;
+        width: 100%;
+        border-radius: 5px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .dropdown-list {
+        display: none;
+        position: absolute;
+        background-color: #ffffff;
+        box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.2);
+        padding: 10px;
+        z-index: 1;
+        width: 100%;
+        max-height: 200px;
+        overflow-y: auto;
+        border-radius: 5px;
+        margin-top: 2px;
+      }
+
+      .dropdown-list div {
+        padding: 8px 10px;
+        border-bottom: 1px solid #eee; 
+        cursor: pointer;
+      }
+
+      .dropdown-list div:hover {
+        background-color: #f2f2f2; 
+      }
+
+      .arrow {
+        float: right;
+        margin-left: 5px; 
+      }
+
+      .arrow.down {
+        border: solid black;
+        border-width: 0 2px 2px 0;
+        display: inline-block;
+        padding: 3px;
+        transform: rotate(45deg);
+        -webkit-transform: rotate(45deg);
+      }
+
+      @media (max-width: 768px) {
+        .selection-container {
+          padding-top: 5vh;
+        padding-left: 5vw;
+          width: auto;
+        }
+
+        .dropdown {
+          width: 30%;
+        }
+
+        .dropdown-select,
+        .dropdown-list {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    
+    <div class="selection-container">
+      <div class="dropdown">
+        <div class="dropdown-select" id="countryDropdown">
+          Select a country <span class="arrow down"></span>
+        </div>
+        <div class="dropdown-list" id="countryList">
+          <!-- years will be added dynamically through JavaScript -->
+        </div>
+      </div>
+    </div>
+    <div id="tooltip" style="position: absolute; opacity: 0; pointer-events: none; background-color: white; padding: 5px; border-radius: 5px; border: 1px solid black;"></div>
+
+    <script>
+
+countries=['EU', 'Belgium', 'Bulgaria', 'Denmark', 'Germany', 'Estonia',
+       'Greece', 'France', 'Cyprus', 'Latvia', 'Lithuania', 'Luxembourg',
+       'Hungary', 'Malta', 'Netherlands', 'Austria', 'Poland', 'Portugal',
+       'Romania', 'Slovenia', 'Slovakia', 'Finland', 'Sweden', 'Norway'];
+
+data=[{'country': 'EU',
+  'VAL': {'Device purchase: none of these characteristics considered important': 3.1,
+   'Device purchase: take-back scheme by manufacturer or seller considered important': 3.8,
+   'Device purchase: price considered important': 36.6,
+   'Device purchase: hard drive or processor speed considered important': 29.9,
+   'Device purchase: possiblity of extending the life span considered important': 5.0,
+   'Device purchase: energy efficiency considered important': 12.1,
+   'Device purchase: have never bought a mobile, smartphone, tablet or desktop computer': 2.5,
+   'Device purchase: eco-design considered important': 7.0}},
+ {'country': 'Belgium',
+  'VAL': {'Device purchase: none of these characteristics considered important': 3.5,
+   'Device purchase: take-back scheme by manufacturer or seller considered important': 2.3,
+   'Device purchase: price considered important': 40.3,
+   'Device purchase: hard drive or processor speed considered important': 31.2,
+   'Device purchase: possiblity of extending the life span considered important': 2.8,
+   'Device purchase: energy efficiency considered important': 13.0,
+   'Device purchase: have never bought a mobile, smartphone, tablet or desktop computer': 1.6,
+   'Device purchase: eco-design considered important': 5.2}},
+ {'country': 'Bulgaria',
+  'VAL': {'Device purchase: none of these characteristics considered important': 3.0,
+   'Device purchase: take-back scheme by manufacturer or seller considered important': 1.8,
+   'Device purchase: price considered important': 46.5,
+   'Device purchase: hard drive or processor speed considered important': 32.1,
+   'Device purchase: possiblity of extending the life span considered important': 3.4,
+   'Device purchase: energy efficiency considered important': 6.0,
+   'Device purchase: have never bought a mobile, smartphone, tablet or desktop computer': 4.1,
+   'Device purchase: eco-design considered important': 3.0}},
+ {'country': 'Denmark',
+  'VAL': {'Device purchase: none of these characteristics considered important': 4.8,
+   'Device purchase: take-back scheme by manufacturer or seller considered important': 6.9,
+   'Device purchase: price considered important': 32.2,
+   'Device purchase: hard drive or processor speed considered important': 28.0,
+   'Device purchase: possiblity of extending the life span considered important': 2.7,
+   'Device purchase: energy efficiency considered important': 14.3,
+   'Device purchase: have never bought a mobile, smartphone, tablet or desktop computer': 4.4,
+   'Device purchase: eco-design considered important': 6.7}},
+ {'country': 'Germany',
+  'VAL': {'Device purchase: none of these characteristics considered important': 5.6,
+   'Device purchase: take-back scheme by manufacturer or seller considered important': 3.0,
+   'Device purchase: price considered important': 37.2,
+   'Device purchase: hard drive or processor speed considered important': 28.4,
+   'Device purchase: possiblity of extending the life span considered important': 5.4,
+   'Device purchase: energy efficiency considered important': 11.4,
+   'Device purchase: have never bought a mobile, smartphone, tablet or desktop computer': 3.7,
+   'Device purchase: eco-design considered important': 5.4}},
+ {'country': 'Estonia',
+  'VAL': {'Device purchase: none of these characteristics considered important': 2.8,
+   'Device purchase: take-back scheme by manufacturer or seller considered important': 6.3,
+   'Device purchase: price considered important': 31.1,
+   'Device purchase: hard drive or processor speed considered important': 31.1,
+   'Device purchase: possiblity of extending the life span considered important': 5.1,
+   'Device purchase: energy efficiency considered important': 11.9,
+   'Device purchase: have never bought a mobile, smartphone, tablet or desktop computer': 2.5,
+   'Device purchase: eco-design considered important': 9.1}},
+ {'country': 'Greece',
+  'VAL': {'Device purchase: none of these characteristics considered important': 0.8,
+   'Device purchase: take-back scheme by manufacturer or seller considered important': 4.3,
+   'Device purchase: price considered important': 31.3,
+   'Device purchase: hard drive or processor speed considered important': 26.7,
+   'Device purchase: possiblity of extending the life span considered important': 13.2,
+   'Device purchase: energy efficiency considered important': 11.2,
+   'Device purchase: have never bought a mobile, smartphone, tablet or desktop computer': 3.5,
+   'Device purchase: eco-design considered important': 9.0}},
+ {'country': 'France',
+  'VAL': {'Device purchase: none of these characteristics considered important': 3.1,
+   'Device purchase: take-back scheme by manufacturer or seller considered important': 4.0,
+   'Device purchase: price considered important': 40.5,
+   'Device purchase: hard drive or processor speed considered important': 30.6,
+   'Device purchase: possiblity of extending the life span considered important': 3.0,
+   'Device purchase: energy efficiency considered important': 10.0,
+   'Device purchase: have never bought a mobile, smartphone, tablet or desktop computer': 1.6,
+   'Device purchase: eco-design considered important': 7.2}},
+ {'country': 'Cyprus',
+  'VAL': {'Device purchase: none of these characteristics considered important': 1.2,
+   'Device purchase: take-back scheme by manufacturer or seller considered important': 11.4,
+   'Device purchase: price considered important': 26.1,
+   'Device purchase: hard drive or processor speed considered important': 21.4,
+   'Device purchase: possiblity of extending the life span considered important': 12.8,
+   'Device purchase: energy efficiency considered important': 14.3,
+   'Device purchase: have never bought a mobile, smartphone, tablet or desktop computer': 0.1,
+   'Device purchase: eco-design considered important': 12.7}},
+ {'country': 'Latvia',
+  'VAL': {'Device purchase: none of these characteristics considered important': 3.2,
+   'Device purchase: take-back scheme by manufacturer or seller considered important': 6.7,
+   'Device purchase: price considered important': 33.5,
+   'Device purchase: hard drive or processor speed considered important': 28.5,
+   'Device purchase: possiblity of extending the life span considered important': 3.7,
+   'Device purchase: energy efficiency considered important': 10.1,
+   'Device purchase: have never bought a mobile, smartphone, tablet or desktop computer': 4.3,
+   'Device purchase: eco-design considered important': 10.0}},
+ {'country': 'Lithuania',
+  'VAL': {'Device purchase: none of these characteristics considered important': 1.9,
+   'Device purchase: take-back scheme by manufacturer or seller considered important': 6.5,
+   'Device purchase: price considered important': 33.7,
+   'Device purchase: hard drive or processor speed considered important': 26.2,
+   'Device purchase: possiblity of extending the life span considered important': 6.5,
+   'Device purchase: energy efficiency considered important': 12.6,
+   'Device purchase: have never bought a mobile, smartphone, tablet or desktop computer': 2.5,
+   'Device purchase: eco-design considered important': 10.1}},
+ {'country': 'Luxembourg',
+  'VAL': {'Device purchase: none of these characteristics considered important': 5.9,
+   'Device purchase: take-back scheme by manufacturer or seller considered important': 4.2,
+   'Device purchase: price considered important': 33.7,
+   'Device purchase: hard drive or processor speed considered important': 28.2,
+   'Device purchase: possiblity of extending the life span considered important': 5.7,
+   'Device purchase: energy efficiency considered important': 14.0,
+   'Device purchase: have never bought a mobile, smartphone, tablet or desktop computer': 2.0,
+   'Device purchase: eco-design considered important': 6.4}},
+ {'country': 'Hungary',
+  'VAL': {'Device purchase: none of these characteristics considered important': 3.6,
+   'Device purchase: take-back scheme by manufacturer or seller considered important': 5.8,
+   'Device purchase: price considered important': 36.3,
+   'Device purchase: hard drive or processor speed considered important': 25.3,
+   'Device purchase: possiblity of extending the life span considered important': 6.7,
+   'Device purchase: energy efficiency considered important': 13.5,
+   'Device purchase: have never bought a mobile, smartphone, tablet or desktop computer': 2.0,
+   'Device purchase: eco-design considered important': 6.8}},
+ {'country': 'Malta',
+  'VAL': {'Device purchase: none of these characteristics considered important': 0.8,
+   'Device purchase: take-back scheme by manufacturer or seller considered important': 8.2,
+   'Device purchase: price considered important': 26.0,
+   'Device purchase: hard drive or processor speed considered important': 24.2,
+   'Device purchase: possiblity of extending the life span considered important': 9.6,
+   'Device purchase: energy efficiency considered important': 15.9,
+   'Device purchase: have never bought a mobile, smartphone, tablet or desktop computer': 0.2,
+   'Device purchase: eco-design considered important': 15.1}},
+ {'country': 'Netherlands',
+  'VAL': {'Device purchase: none of these characteristics considered important': 1.8,
+   'Device purchase: take-back scheme by manufacturer or seller considered important': 2.3,
+   'Device purchase: price considered important': 35.7,
+   'Device purchase: hard drive or processor speed considered important': 41.8,
+   'Device purchase: possiblity of extending the life span considered important': 2.5,
+   'Device purchase: energy efficiency considered important': 11.1,
+   'Device purchase: have never bought a mobile, smartphone, tablet or desktop computer': 0.3,
+   'Device purchase: eco-design considered important': 4.4}},
+ {'country': 'Austria',
+  'VAL': {'Device purchase: none of these characteristics considered important': 0.6,
+   'Device purchase: take-back scheme by manufacturer or seller considered important': 6.7,
+   'Device purchase: price considered important': 23.8,
+   'Device purchase: hard drive or processor speed considered important': 23.4,
+   'Device purchase: possiblity of extending the life span considered important': 7.5,
+   'Device purchase: energy efficiency considered important': 14.4,
+   'Device purchase: have never bought a mobile, smartphone, tablet or desktop computer': 2.8,
+   'Device purchase: eco-design considered important': 20.8}},
+ {'country': 'Poland',
+  'VAL': {'Device purchase: none of these characteristics considered important': 2.1,
+   'Device purchase: take-back scheme by manufacturer or seller considered important': 3.0,
+   'Device purchase: price considered important': 38.2,
+   'Device purchase: hard drive or processor speed considered important': 33.8,
+   'Device purchase: possiblity of extending the life span considered important': 4.4,
+   'Device purchase: energy efficiency considered important': 10.8,
+   'Device purchase: have never bought a mobile, smartphone, tablet or desktop computer': 2.3,
+   'Device purchase: eco-design considered important': 5.3}},
+ {'country': 'Portugal',
+  'VAL': {'Device purchase: none of these characteristics considered important': 0.7,
+   'Device purchase: take-back scheme by manufacturer or seller considered important': 6.6,
+   'Device purchase: price considered important': 29.1,
+   'Device purchase: hard drive or processor speed considered important': 26.9,
+   'Device purchase: possiblity of extending the life span considered important': 8.5,
+   'Device purchase: energy efficiency considered important': 16.4,
+   'Device purchase: have never bought a mobile, smartphone, tablet or desktop computer': 1.8,
+   'Device purchase: eco-design considered important': 10.0}},
+ {'country': 'Romania',
+  'VAL': {'Device purchase: none of these characteristics considered important': 1.4,
+   'Device purchase: take-back scheme by manufacturer or seller considered important': 2.6,
+   'Device purchase: price considered important': 40.8,
+   'Device purchase: hard drive or processor speed considered important': 25.9,
+   'Device purchase: possiblity of extending the life span considered important': 7.9,
+   'Device purchase: energy efficiency considered important': 11.2,
+   'Device purchase: have never bought a mobile, smartphone, tablet or desktop computer': 5.4,
+   'Device purchase: eco-design considered important': 4.8}},
+ {'country': 'Slovenia',
+  'VAL': {'Device purchase: none of these characteristics considered important': 2.7,
+   'Device purchase: take-back scheme by manufacturer or seller considered important': 4.7,
+   'Device purchase: price considered important': 34.9,
+   'Device purchase: hard drive or processor speed considered important': 33.9,
+   'Device purchase: possiblity of extending the life span considered important': 5.7,
+   'Device purchase: energy efficiency considered important': 9.2,
+   'Device purchase: have never bought a mobile, smartphone, tablet or desktop computer': 1.9,
+   'Device purchase: eco-design considered important': 7.0}},
+ {'country': 'Slovakia',
+  'VAL': {'Device purchase: none of these characteristics considered important': 3.1,
+   'Device purchase: take-back scheme by manufacturer or seller considered important': 2.6,
+   'Device purchase: price considered important': 40.9,
+   'Device purchase: hard drive or processor speed considered important': 32.3,
+   'Device purchase: possiblity of extending the life span considered important': 3.3,
+   'Device purchase: energy efficiency considered important': 10.1,
+   'Device purchase: have never bought a mobile, smartphone, tablet or desktop computer': 1.0,
+   'Device purchase: eco-design considered important': 6.7}},
+ {'country': 'Finland',
+  'VAL': {'Device purchase: none of these characteristics considered important': 3.4,
+   'Device purchase: take-back scheme by manufacturer or seller considered important': 3.0,
+   'Device purchase: price considered important': 39.8,
+   'Device purchase: hard drive or processor speed considered important': 34.5,
+   'Device purchase: possiblity of extending the life span considered important': 1.7,
+   'Device purchase: energy efficiency considered important': 7.2,
+   'Device purchase: have never bought a mobile, smartphone, tablet or desktop computer': 1.5,
+   'Device purchase: eco-design considered important': 9.0}},
+ {'country': 'Sweden',
+  'VAL': {'Device purchase: none of these characteristics considered important': 4.3,
+   'Device purchase: take-back scheme by manufacturer or seller considered important': 2.0,
+   'Device purchase: price considered important': 29.8,
+   'Device purchase: hard drive or processor speed considered important': 26.2,
+   'Device purchase: possiblity of extending the life span considered important': 1.4,
+   'Device purchase: energy efficiency considered important': 29.8,
+   'Device purchase: have never bought a mobile, smartphone, tablet or desktop computer': 1.9,
+   'Device purchase: eco-design considered important': 4.5}},
+ {'country': 'Norway',
+  'VAL': {'Device purchase: none of these characteristics considered important': 1.1,
+   'Device purchase: take-back scheme by manufacturer or seller considered important': 9.0,
+   'Device purchase: price considered important': 27.2,
+   'Device purchase: hard drive or processor speed considered important': 27.5,
+   'Device purchase: possiblity of extending the life span considered important': 7.6,
+   'Device purchase: energy efficiency considered important': 13.9,
+   'Device purchase: have never bought a mobile, smartphone, tablet or desktop computer': 2.3,
+   'Device purchase: eco-design considered important': 11.4}}]
+
+let width = (window.innerWidth * 1),
+    height = window.innerHeight * 0.7,
+    margin = { top: window.innerHeight * 0.05, right:window.innerHeight * 0.1 , bottom: window.innerHeight * 0.05, left: window.innerWidth * 0.05 };
+
+let svg = d3.select("body").append("svg")
+    .attr("width", width)
+    .attr("height", height)
+    .append("g")
+    .attr("transform", "translate(" + margin.left   + "," + margin.top + ")");
+
+    let currentCountry = "EU";
+
+function hierarchyData(selectedCountry) {
+  let countryData = data.find(d => d.country === selectedCountry);
+  
+  if (!countryData || !countryData.VAL) {
+    console.error("Country data or VAL is undefined for", selectedCountry);
+    return null;
+  }
+
+  let children = Object.entries(countryData.VAL).map(([name, value]) => ({name, value}));
+  return d3.hierarchy({name: 'VAL', children: children}).sum(d => d.value);
+}
+
+
+// Function to create and update the treemap
+
+function updateTreemap(selectedCountry) {
+    currentCountry = selectedCountry;
+    svg.selectAll("*").remove();
+
+    let root = hierarchyData(selectedCountry);
+console.log("root data ",root)
+if (!root) return;
+
+// Create treemap layout
+
+d3.treemap()
+  .size([width - margin.left - margin.right, height - margin.top - margin.bottom])
+  .padding(2)
+  (root);
+
+// Adding rectangles
+svg.selectAll("rect")
+  .data(root.leaves())
+  .enter().append("rect")
+  .attr('x', d => d.x0)
+  .attr('y', d => d.y0)
+  .attr('width', d => d.x1 - d.x0)
+  .attr('height', d => d.y1 - d.y0)
+  .style("stroke", "white")
+  .style("fill", d => {
+
+    let normalizedValue = (d.data.value / 100) * 0.8 + 0.4; 
+    return d3.interpolateBlues(normalizedValue);
+})
+  .on("mouseover", function(event, d) {
+    // Show tooltip
+    d3.select("#tooltip")
+      .style("opacity", 1)
+      .html(`${d.data.name}: ${d.data.value.toFixed(2)}%`)
+      .style("left", (event.pageX + 10) + "px")
+      .style("top", (event.pageY + 10) + "px");
+
+    // Change style of hovered rect
+    d3.select(this)
+      .style("stroke", "black")
+      .style("stroke-width", "2px");
+
+    // Reduce opacity of other rects
+    svg.selectAll("rect").style("opacity", 0.7);
+    d3.select(this).style("opacity", 1);
+  })
+  .on("mouseout", function() {
+    // Hide tooltip
+    d3.select("#tooltip").style("opacity", 0);
+
+    // Reset style of rects
+    svg.selectAll("rect")
+      .style("stroke", "white")
+      .style("stroke-width", "1px")
+      .style("opacity", 1);
+  });
+//   svg.selectAll("text")
+//   .data(root.leaves())
+//   .enter().append("text")
+//   .attr("x", d => d.x0 + 5)
+
+//   // Estimate the y position; this may need adjustment
+//   .attr("y", d => (d.y0 + (d.y1 - d.y0) / 2)-20)
+//   .text(d => d.data.name)
+//   .attr("font-size", d => {
+//     // Dynamically adjust font size based on box width, with a minimum and maximum size
+//     const boxWidth = d.x1 - d.x0;
+//     return `${Math.max(9, Math.min(20, boxWidth / 10))}px`; // Example calculation, adjust as needed
+//   })
+//   .attr("fill", "white")
+//   .each(function(d) {
+//     wrap(d3.select(this), d.x1 - d.x0 - 10); // Adjust padding as needed
+//   });
+
+// function wrap(text, width) {
+//   text.each(function() {
+//     var text = d3.select(this),
+//         words = text.text().split(/\s+/).reverse(),
+//         word,
+//         line = [],
+//         lineNumber = 0,
+//         lineHeight = 1.1, // ems
+//         y = text.attr("y"),
+//         dy = 0, // Adjust as needed
+//         tspan = text.text(null).append("tspan").attr("x", text.attr("x")).attr("y", y).attr("dy", dy + "em");
+    
+//     while (word = words.pop()) {
+//       line.push(word);
+//       tspan.text(line.join(" "));
+//       if (tspan.node().getComputedTextLength() > width) {
+//         line.pop();
+//         tspan.text(line.join(" "));
+//         line = [word];
+//         tspan = text.append("tspan").attr("x", text.attr("x")).attr("y", y).attr("dy", `${++lineNumber * lineHeight + dy}em`).text(word);
+//       }
+//     }
+//   });
+// }
+
+ }
+
+// Function to populate the dropdown with country names
+function populateCountryDropdown() {
+        var countryListDiv = document.getElementById("countryList");
+        countries.forEach(function (country) {
+          var countryOption = document.createElement("div");
+          countryOption.innerText = country;
+          countryOption.addEventListener("click", function () {
+            var countryDropdown = document.getElementById("countryDropdown");
+            countryDropdown.innerHTML =
+              country + " <span class='arrow down'></span>";
+            currentCountryIndex = countries.indexOf(country);
+            updateTreemap(country);
+            // Close the dropdown list
+            document.getElementById("countryList").style.display = "none";
+          });
+          countryListDiv.appendChild(countryOption);
+        });
+      }
+
+      // Toggle dropdown list visibility
+      document
+        .getElementById("countryDropdown")
+        .addEventListener("click", function () {
+          var dropdownList = document.getElementById("countryList");
+          dropdownList.style.display =
+            dropdownList.style.display === "none" ? "block" : "none";
+        });
+
+      // Call this function to initialize the dropdown with countries
+      populateCountryDropdown();
+
+      // Clicking anywhere outside the dropdown should close it
+      window.addEventListener("click", function (event) {
+        if (!event.target.matches(".dropdown-select")) {
+          var dropdowns = document.getElementsByClassName("dropdown-list");
+          for (var i = 0; i < dropdowns.length; i++) {
+            var openDropdown = dropdowns[i];
+            if (openDropdown.style.display === "block") {
+              openDropdown.style.display = "none";
+            }
+          }
+        }
+      });
+      // Initial display update
+      function updateSVGSize() {
+    width = window.innerWidth * 1;
+    height = window.innerHeight * 0.7;
+
+    d3.select("svg")
+       .attr("width", width)
+       .attr("height", height);
+
+    updateTreemap(currentCountry);
+}
+
+// Add event listener for window resize
+window.addEventListener("resize", updateSVGSize);
+
+// Initial setup and drawing
+updateSVGSize(); // Set initial size and draw the treemap
+
+populateCountryDropdown();
+updateTreemap(currentCountry); 
+    </script>
+    </body>
+  </html>
