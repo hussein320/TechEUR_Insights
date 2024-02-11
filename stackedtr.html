@@ -194,7 +194,7 @@
     </div>
 
     <script>
-      let countriesData = [
+      let countriesData1 = [
         {
           country: "Belgium",
           VAL: {
@@ -6685,6 +6685,37 @@
         },
       ];
 
+      function convertToProportional(data) {
+        data.forEach((countryData) => {
+          Object.keys(countryData.VAL).forEach((year) => {
+            const sectors = countryData.VAL[year];
+            let totalSum = 0;
+            // Calculate total sum for the year, excluding entries with ":"
+            Object.values(sectors).forEach((value) => {
+              if (value !== ":") {
+                totalSum += parseFloat(value);
+              }
+            });
+
+            if (totalSum === 0) return; // Avoid division by zero
+
+            // Calculate and update proportional values
+            Object.keys(sectors).forEach((sector) => {
+              if (sectors[sector] !== ":") {
+                const proportionalValue =
+                  (parseFloat(sectors[sector]) / totalSum) * 100;
+                sectors[sector] = proportionalValue.toFixed(2);
+              }
+            });
+          });
+        });
+
+        return data;
+      }
+
+      let countriesData = convertToProportional(countriesData1);
+      console.error(countriesData);
+
       let selectBox = document.querySelector(".select-box");
       let optionsContainer = document.querySelector(".options-container");
       let selectedCountries = [
@@ -6803,7 +6834,7 @@
       function update(currentYear, selectedCountries) {
         let stackData = processData(currentYear, selectedCountries);
         svg.selectAll("*").remove();
-        console.log(stackData);
+        console.log("st data", stackData);
 
         let categories = Object.keys(countriesData[0].VAL[currentYear]);
         let colorScheme = d3.schemeCategory10;
@@ -6819,7 +6850,7 @@
         let maxValue = d3.max(stackData, (countryData) =>
           d3.max(countryData.data, (d) => d.value)
         );
-        let xScale = d3.scaleLinear().range([0, width]).domain([0, maxValue]);
+        let xScale = d3.scaleLinear().range([0, width]).domain([0, 100]);
 
         yScale.domain(selectedCountries);
 
@@ -6829,8 +6860,8 @@
             .attr("transform", `translate(0, ${yScale(countryData.country)})`);
 
           // Sort country data by value in descending order
-          countryData.data.sort((a, b) => b.value - a.value);
-
+          // countryData.data.sort((a, b) => a.value - b.value);
+          let cumulative = 0;
           countryData.data.forEach((data, index) => {
             let subYScale = d3
               .scaleBand()
@@ -6840,43 +6871,51 @@
 
             // Check for undefined values
             if (data.value !== undefined) {
-              barGroup
+              let bar = barGroup
                 .append("rect")
                 .datum(data)
                 .attr("y", subYScale(data.category))
-                .attr("x", 0)
+                .attr("x", xScale(cumulative))
                 .classed("bar", true)
-
                 .attr("height", subYScale.bandwidth())
-                .attr("width", xScale(data.value)) // Adjusted for x-axis
+                .attr("width", xScale(data.value))
                 .attr("fill", colorMap[data.category]);
-              // .on("mouseover", function (event, d) {
-              //   // Change the opacity of all other bars
-              //   d3.selectAll(".bar").style("opacity", 0.1);
+              cumulative += data.value;
 
-              //   // Highlight the hovered bar
-              //   d3.select(this)
-              //     .style("opacity", 1)
-              //     .style("rx", 5)
-              //     .style("stroke", "black")
-              //     .style("stroke-width", "1px");
+              bar
+                .on("mouseover", function (event, d) {
+                  // Change the opacity of all other bars
+                  d3.selectAll(".bar").style("opacity", 0.1);
 
-              //   // Show the tooltip
-              //   const mouseX = event.pageX; // Mouse X coordinate
-              //   const mouseY = event.pageY; // Mouse Y coordinate
+                  // Highlight the hovered bar
+                  d3.select(this)
+                    .style("opacity", 1)
+                    .style("rx", 5)
+                    .style("stroke", "black")
+                    .style("stroke-width", "1px");
 
-              //   showTooltip(d, mouseX, mouseY);
-              // })
-              // .on("mouseout", function () {
-              //   // Reset the opacity of all bars
-              //   d3.selectAll(".bar").style("opacity", 1);
+                  // Show the tooltip
+                  const mouseX = event.pageX; // Mouse X coordinate
+                  const mouseY = event.pageY; // Mouse Y coordinate
 
-              //   // Remove the stroke from the bar
-              //   d3.select(this).style("stroke", "none").style("rx", 0);
+                  showTooltip(
+                    d,
+                    event.pageX,
+                    event.pageY,
+                    countryData.country,
+                    currentYear
+                  );
+                })
+                .on("mouseout", function () {
+                  // Reset the opacity of all bars
+                  d3.selectAll(".bar").style("opacity", 1);
 
-              //   // Remove the tooltip
-              //   d3.selectAll(".tooltip").remove();
-              // });
+                  // Remove the stroke from the bar
+                  d3.select(this).style("stroke", "none").style("rx", 0);
+
+                  // Remove the tooltip
+                  d3.selectAll(".tooltip").remove();
+                });
             }
           });
         });
@@ -6914,14 +6953,14 @@
         // Create text labels with formatted text and wrapping
         legend
           .append("text")
-          .attr("x", 30) // Increase the x offset from the rectangle for more space
-          .attr("y", 18 / 2) // Center the text vertically with the box
+          .attr("x", 30)
+          .attr("y", 18 / 2)
           .attr("dy", "0.35em")
-          .style("alignment-baseline", "middle") // Ensure the text is centered vertically
-          .text((d) => d.replace(/_/g, " ")) // Replace underscores with spaces
+          .style("alignment-baseline", "middle")
+          .text((d) => d.replace(/_/g, " "))
           .call(wrap, margin.right - 30);
 
-        svg.append("g").call(d3.axisLeft(yScale)); // Adjusted for y-axis
+        svg.append("g").call(d3.axisLeft(yScale));
 
         // Add the x-axis
         svg
@@ -6978,11 +7017,11 @@
         merge.append("feMergeNode").attr("in", "SourceGraphic");
         // Function to show tooltip
         // Function to show tooltip
-        function showTooltip(d, mouseX, mouseY) {
+        function showTooltip(d, mouseX, mouseY, country, year) {
           const padding = 10;
           const fontSize = "14px";
           const fontFamily = "Arial, sans-serif";
-          const text = `${d.category}: ${d.value}%`;
+          const text = `${country}, ${year}: ${d.category}: ${d.value}%`;
 
           // Measure the text
           const textSize = measureTextSize(text, fontSize, fontFamily);
@@ -7010,7 +7049,7 @@
             .attr("height", tooltipHeight)
             .style("fill", "rgba(255, 255, 255, 0.9)")
             .style("stroke", "#ddd")
-            .style("stroke-width", "1px")
+            .style("stroke-wid.onth", "1px")
             .style("filter", "url(#drop-shadow)");
 
           // Text for the tooltip
@@ -7030,7 +7069,7 @@
           .selectAll(".bar")
           .transition()
           .style("opacity", function () {
-            return d3.select(this).attr("fill") === color ? 1 : 0;
+            return d3.select(this).attr("fill") === color ? 1 : 0.1;
           });
       }
 
@@ -7055,16 +7094,11 @@
               const barX = parseFloat(bar.attr("x"));
               const barY = parseFloat(bar.attr("y"));
 
-              // Get the parent group (g element) of the bar to append the text
               const parentGroup = d3.select(this.parentNode);
 
-              // Calculate the position for the text
-              // It should be in the middle of the bar segment horizontally,
-              // and vertically aligned in the center of the bar's height.
               const textX = 30 + barX + barWidth;
               const textY = barY + barHeight / 2;
 
-              // Append text to the parent group of the bar, using the calculated positions
               parentGroup
                 .append("text")
                 .attr("class", "bar-value-text")

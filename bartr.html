@@ -796,12 +796,9 @@
         document
           .querySelector(".dropdown-select")
           .addEventListener("click", function () {
-            // If the dropdown is currently visible, hide it
             if (dropdownList.style.display === "block") {
               dropdownList.style.display = "none";
             } else {
-              // If the dropdown is hidden (style.display is "none" or empty), show it
-              // This check is technically redundant given the binary toggle, but included for demonstration
               dropdownList.style.display =
                 dropdownList.style.display === "none" ||
                 dropdownList.style.display === ""
