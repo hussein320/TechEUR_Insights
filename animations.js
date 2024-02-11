@@ -1,71 +1,3 @@
-// ANIMATION FOR THE SPAN DISPLAY OF THE HOME IMAGE SECTION
-document.addEventListener('DOMContentLoaded', (event) => {
-    const digit = document.getElementById('digit');
-    const factor = document.getElementById('factor');
-    const impacts = document.getElementById('impacts');
-    const future = document.getElementById('future');
-  
-    function typeEffect(element, delay = 100) {
-        return new Promise((resolve) => {
-            element.style.opacity = 1; // Ensure element is visible
-            const text = element.getAttribute('data-text'); // Use data attribute to hold the text
-            element.textContent = "";
-            let i = 0;
-            const typing = setInterval(() => {
-                if (i < text.length) {
-                    element.textContent += text.charAt(i);
-                    i++;
-                } else {
-                    clearInterval(typing);
-                    resolve();
-                }
-            }, delay);
-        });
-    }
-  
-    function eraseEffect(element, delay = 100) {
-        return new Promise((resolve) => {
-            const text = element.textContent;
-            let i = text.length;
-            const erasing = setInterval(() => {
-                if (i > 0) {
-                    element.textContent = text.substring(0, i - 1);
-                    i--;
-                } else {
-                    clearInterval(erasing);
-                    element.style.opacity = 0; // Optionally hide element after erasing
-                    resolve();
-                }
-            }, delay);
-        });
-    }
-  
-    async function sequence() {
-        while (true) { // Infinite loop
-            await typeEffect(factor, 130);
-            await new Promise(resolve => setTimeout(resolve, 300));
-            await typeEffect(impacts, 130);
-            await new Promise(resolve => setTimeout(resolve, 300));
-            await typeEffect(future, 130);
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            await eraseEffect(future, 130);
-            await new Promise(resolve => setTimeout(resolve, 300));
-            await eraseEffect(impacts, 130);
-            await new Promise(resolve => setTimeout(resolve, 300));
-            await eraseEffect(factor, 130);
-            await new Promise(resolve => setTimeout(resolve, 1000)); // Ensure a pause before starting over
-        }
-    }
-  
-    // Set initial text content to data attribute to preserve original text
-    [digit, factor, impacts, future].forEach(element => {
-        element.setAttribute('data-text', element.textContent);
-    });
-  
-    // Initialize sequence
-    sequence();
-  });
-  
   
   // ANIMATION FOR HOVERING EFFECT ON THE NAV BAR WHEN LINKED SECTIONS DISPLAYED
   document.addEventListener('DOMContentLoaded', () => {
@@ -134,101 +66,80 @@ document.addEventListener('DOMContentLoaded', (event) => {
   var iframe4;
   var iframe5;
   
-  
-  document.addEventListener('DOMContentLoaded', (event) => {
-      // Access the iframe document
-      iframe = document.getElementById('line_plot_iframe').contentDocument || 
-                   document.getElementById('line_plot_iframe').contentWindow.document;
-  
-  
-      iframe2 = document.getElementById('sankey_plot_iframe').contentDocument || 
-      document.getElementById('sankey_plot_iframe').contentWindow.document;
-      iframe3 = document.getElementById('bar_plot_iframe').contentDocument || 
-      document.getElementById('bar_plot_iframe').contentWindow.document;
-      
-      iframe4 = document.getElementById('scatter_plot_iframe').contentDocument || 
-      document.getElementById('scatter_plot_iframe').contentWindow.document;
-  
-      iframe5 = document.getElementById('lollipop_plot_iframe').contentDocument || 
-      document.getElementById('lollipop_plot_iframe').contentWindow.document;
-  
-  
-    });
-  
-    var listItemCountries = document.querySelector('#guide1 li:nth-child(1)');
-    var listItemLegend = document.querySelector('#guide1 li:nth-child(2)');
-    var listItemThird = document.querySelector('#guide1 li:nth-child(3)');
+   
+
+   
+
+document.getElementById('line_plot_iframe').addEventListener('load', function() {
+
+    var iframe = this.contentDocument || this.contentWindow.document;
+    
+    var guide = document.querySelector('#guide1 li:nth-child(1)');
+    var listItemCountries = document.querySelector('#guide1 li:nth-child(2)');
+    var listItemLegend = document.querySelector('#guide1 li:nth-child(3)');
+    var listItemThird = document.querySelector('#guide1 li:nth-child(4)');
   
     function addBlurToSelectBox() {
-      
-      var selectBox = iframe.querySelector('.select-box');
-      console.log(selectBox)
-      if (selectBox) {
-        selectBox.style.transition = 'box-shadow 0.5s ease';
-        selectBox.style.boxShadow = '0 0 15px #3a80d6';
-      }
+        var selectBox = iframe.querySelector('.select-box');
+        if (selectBox) {
+            selectBox.style.transition = 'box-shadow 0.5s ease';
+            selectBox.style.boxShadow = '0 0 15px #3a80d6';
+        }
     }
-  
-  
+
     function removeBlurFromSelectBox() {
-      var selectBox = iframe.querySelector('.select-box');
-      if (selectBox) {
-        selectBox.style.boxShadow = '';
-      }
+        var selectBox = iframe.querySelector('.select-box');
+        if (selectBox) {
+            selectBox.style.boxShadow = '';
+        }
     }
+
     function addShadowToLegend() {
         var legend = iframe.querySelectorAll('.legend-circle');
-  
-          legend.forEach(leg => {
-              leg.style.transition = 'stroke 0.5s, stroke-width 0.5s'; 
-              leg.style.stroke = 'rgba(30, 144, 255, 0.5)';
-              leg.style.strokeWidth = '15px';
-          });
-        }
-    
-    
+        legend.forEach(function(leg) {
+            leg.style.transition = 'stroke 0.5s, stroke-width 0.5s';
+            leg.style.stroke = 'rgba(30, 144, 255, 0.5)';
+            leg.style.strokeWidth = '15px';
+        });
+    }
+
     function removeShadowFromLegend() {
         var legend = iframe.querySelectorAll('.legend-circle');
-  
-            legend.forEach(leg => {
-              leg.style.transition = 'stroke 0.5s, stroke-width 0.5s'; 
-              leg.style.stroke = '';
-              leg.style.strokeWidth = '';
-          });
-        }
-    
-    
+        legend.forEach(function(leg) {
+            leg.style.stroke = '';
+            leg.style.strokeWidth = '';
+        });
+    }
+
     function addShadowToCircles() {
         var circles = iframe.querySelectorAll('circle:not(.legend-circle)');
-        circles.forEach(circle => {
+        circles.forEach(function(circle) {
             circle.classList.add('hover-shadow');
         });
-  
-     
     }
-    
+
     function removeShadowFromCircles() {
         var circles = iframe.querySelectorAll('circle:not(.legend-circle)');
-        circles.forEach(circle => { 
+        circles.forEach(function(circle) {
             circle.classList.remove('hover-shadow');
-  
         });
     }
-    
-  
+
+
     listItemCountries.addEventListener('mouseover', addBlurToSelectBox);
     listItemCountries.addEventListener('mouseout', removeBlurFromSelectBox);
-    
+
     listItemLegend.addEventListener('mouseover', addShadowToLegend);
     listItemLegend.addEventListener('mouseout', removeShadowFromLegend);
-    
+
     listItemThird.addEventListener('mouseover', addShadowToCircles);
     listItemThird.addEventListener('mouseout', removeShadowFromCircles);
-    
-  
-  
-  
-  
+});
+
+document.getElementById('sankey_plot_iframe').addEventListener('load', function() {
+
+    var iframe2 = this.contentDocument || this.contentWindow.document;
+
     var listNodes = document.querySelector('#guide2 li:nth-child(3)');
   
   
@@ -255,8 +166,14 @@ document.addEventListener('DOMContentLoaded', (event) => {
     listNodes.addEventListener("mouseover",addBlurTonodes)
     listNodes.addEventListener("mouseout",removeBlurFromnodes)
   
-    var listyear = document.querySelector('#guide3 li:nth-child(1)');
-  
+    
+});
+    document.getElementById('bar_plot_iframe').addEventListener('load', function() {
+
+        var iframe3 = this.contentDocument || this.contentWindow.document;
+
+        var listyear = document.querySelector('#guide3 li:nth-child(1)');
+        var listcount = document.querySelector('#guide3 li:nth-child(2)');
     function addshadowtoyearselect(){
       var yearsel =  iframe3.querySelector('#yearSelect');
       if(yearsel){
@@ -276,8 +193,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
     }
   
     
-    var listyear = document.querySelector('#guide3 li:nth-child(1)');
-    var listcount = document.querySelector('#guide3 li:nth-child(2)');
+ 
   
     function addshadowtocountselect(){
       var countsel =  iframe3.querySelector('.dropdown');
@@ -303,7 +219,11 @@ document.addEventListener('DOMContentLoaded', (event) => {
     listcount.addEventListener("mouseout",removeshadowtocountselect);
   
   
-    // scatter plot
+});
+
+document.getElementById('scatter_plot_iframe').addEventListener('load', function() {
+    iframe4 = this.contentDocument || this.contentWindow.document;
+
     var listcountsc = document.querySelector('#guide4 li:nth-child(1)');
     var dotplotscatt = document.querySelector('#guide4 li:nth-child(2)');
     var textlegendscatt = document.querySelector('#guide4 li:nth-child(3)');
@@ -404,10 +324,11 @@ document.addEventListener('DOMContentLoaded', (event) => {
     reset.addEventListener("mouseover", addShadowTorestscatter);
     reset.addEventListener("mouseout",removeShadowFromresettscatter);
   
-    
-    // lollipop plot
-  
-  
+});
+
+document.getElementById('lollipop_plot_iframe').addEventListener('load', function() {
+    iframe5 = this.contentDocument || this.contentWindow.document;
+
     var dotslolly = document.querySelector('#guide5 li:nth-child(1)');
     var EUlolli = document.querySelector('#guide5 li:nth-child(2)');
     var TimeTravel = document.querySelector('#guide5 li:nth-child(3)');
@@ -484,3 +405,5 @@ document.addEventListener('DOMContentLoaded', (event) => {
   EUlolli.addEventListener("mouseout",removeShadowFromCirclelolliEU);
   TimeTravel.addEventListener("mouseover", addBlurToTimetravel);
   TimeTravel.addEventListener("mouseout", removeBlurToTimetravel);
+});
+

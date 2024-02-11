@@ -244,9 +244,12 @@ function getSelectedCountries() {
     return Array.from(selectedOptions).map(option => option.value);
 }
 
-// Function to toggle the options container
 function toggleOptionsContainer() {
-    optionsContainer.style.display = optionsContainer.style.display === "none" ? "block" : "none";
+    if (optionsContainer.style.display === "" || optionsContainer.style.display === "none") {
+        optionsContainer.style.display = "block";
+    } else {
+        optionsContainer.style.display = "none";
+    }
 }
 
 // Set up event listeners
@@ -489,5 +492,14 @@ function toggleSelection(country) {
     
     
     </script>
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data === 'closeDropdown') {
+              document.querySelector(".options-container").style.display = "none";
+            }
+
+        });
+      </script>
+      
     </body>
     </html>

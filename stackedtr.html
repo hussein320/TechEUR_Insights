@@ -155,6 +155,21 @@
       span {
         font-size: "roboto";
       }
+      .select-box {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .arrow.down {
+        border: solid black;
+        border-width: 0 2px 2px 0;
+        display: inline-block;
+        padding: 3px;
+        margin-right: 5px;
+        transform: rotate(45deg);
+        -webkit-transform: rotate(45deg);
+        /* Removed margin-left: auto; since flexbox handles the alignment */
+      }
     </style>
   </head>
   <body>
@@ -6723,9 +6738,16 @@
       });
 
       selectBox.addEventListener("click", function (event) {
-        event.stopPropagation(); // Prevents the click event from bubbling up to the document body
-        optionsContainer.style.display =
-          optionsContainer.style.display === "none" ? "block" : "none";
+        event.stopPropagation();
+        if (optionsContainer.style.display === "block") {
+          optionsContainer.style.display = "none";
+        } else {
+          optionsContainer.style.display =
+            optionsContainer.style.display === "none" ||
+            optionsContainer.style.display === ""
+              ? "block"
+              : "none";
+        }
       });
 
       // Clicking outside the selectBox hides the optionsContainer
@@ -6745,7 +6767,7 @@
         return selectedCountries;
       }
 
-      let currentYear = 2005;
+      let currentYear = "2005";
       let width = window.innerWidth * 0.5,
         height = window.innerHeight * 0.6,
         margin = {
@@ -7187,6 +7209,14 @@
       updateSVGSize();
       // Initialize the visualization with the current year
       update(currentYear, selectedCountries);
+    </script>
+
+    <script>
+      window.addEventListener("message", function (event) {
+        if (event.data === "closeDropdown") {
+          document.querySelector(".options-container").style.display = "none";
+        }
+      });
     </script>
   </body>
 </html>

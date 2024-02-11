@@ -780,7 +780,7 @@
           },
         },
       ];
-      var currentYear = 2014;
+      var currentYear = "2014";
       var currentCountryIndex = 0;
       var countries = [
         "EU",
@@ -1049,15 +1049,21 @@
         });
       }
 
-      // Toggle dropdown list visibility
       document
         .getElementById("countryDropdown")
         .addEventListener("click", function () {
           var dropdownList = document.getElementById("countryList");
-          dropdownList.style.display =
-            dropdownList.style.display === "none" ? "block" : "none";
-        });
 
+          if (dropdownList.style.display === "block") {
+            dropdownList.style.display = "none";
+          } else {
+            dropdownList.style.display =
+              dropdownList.style.display === "none" ||
+              dropdownList.style.display === ""
+                ? "block"
+                : "none";
+          }
+        });
       // Call this function to initialize the dropdown with countries
       populateCountryDropdown();
 
@@ -1076,6 +1082,14 @@
       // Initial display update
 
       updateVisualization(); // Initial visualization
+    </script>
+
+    <script>
+      window.addEventListener("message", function (event) {
+        if (event.data === "closeDropdown") {
+          document.querySelector("#countryList").style.display = "none";
+        }
+      });
     </script>
   </body>
 </html>

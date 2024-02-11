@@ -739,11 +739,27 @@
           }
         });
 
+        // document
+        //   .querySelector(".select-box")
+        //   .addEventListener("click", function () {
+        //     optionsContainer.style.display =
+        //       optionsContainer.style.display === "none" || " "
+        //         ? "block"
+        //         : "none";
+        //   });
+
         document
           .querySelector(".select-box")
           .addEventListener("click", function () {
-            optionsContainer.style.display =
-              optionsContainer.style.display === "none" ? "block" : "none";
+            if (optionsContainer.style.display === "block") {
+              optionsContainer.style.display = "none";
+            } else {
+              optionsContainer.style.display =
+                optionsContainer.style.display === "none" ||
+                optionsContainer.style.display === ""
+                  ? "block"
+                  : "none";
+            }
           });
 
         // Close the dropdown if clicked outside
@@ -1177,6 +1193,14 @@
           .text("Unknown")
           .style("font-family", "Roboto");
       }
+    </script>
+
+    <script>
+      window.addEventListener("message", function (event) {
+        if (event.data === "closeDropdown") {
+          document.querySelector(".options-container").style.display = "none";
+        }
+      });
     </script>
   </body>
 </html>

@@ -67,6 +67,7 @@
         display: none;
         max-height: 200px;
         z-index: 1000;
+        display: none;
       }
 
       .dropdown-list label {
@@ -103,6 +104,14 @@
       }
       .selectt {
         font-family: "Roboto";
+      }
+      .arrow.down {
+        border: solid black;
+        border-width: 0 2px 2px 0;
+        display: inline-block;
+        padding: 3px;
+        transform: rotate(45deg);
+        -webkit-transform: rotate(45deg);
       }
     </style>
   </head>
@@ -787,8 +796,18 @@
         document
           .querySelector(".dropdown-select")
           .addEventListener("click", function () {
-            dropdownList.style.display =
-              dropdownList.style.display === "none" ? "block" : "none";
+            // If the dropdown is currently visible, hide it
+            if (dropdownList.style.display === "block") {
+              dropdownList.style.display = "none";
+            } else {
+              // If the dropdown is hidden (style.display is "none" or empty), show it
+              // This check is technically redundant given the binary toggle, but included for demonstration
+              dropdownList.style.display =
+                dropdownList.style.display === "none" ||
+                dropdownList.style.display === ""
+                  ? "block"
+                  : "none";
+            }
           });
 
         // Hide dropdown if clicked outside
@@ -1025,6 +1044,14 @@
           .style("font-size", "16px")
           .text("% of ICT Personnel in Total Employment");
       }
+    </script>
+    <script>
+      window.addEventListener("message", function (event) {
+        if (event.data === "closeDropdown") {
+          document.querySelector(".dropdown-list").style.display = "none";
+        }
+        // }
+      });
     </script>
   </body>
 </html>

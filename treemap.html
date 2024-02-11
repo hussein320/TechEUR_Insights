@@ -111,7 +111,7 @@ margin: 0;
           Select a country <span class="arrow down"></span>
         </div>
         <div class="dropdown-list" id="countryList">
-          <!-- years will be added dynamically through JavaScript -->
+          
         </div>
       </div>
     </div>
@@ -424,48 +424,74 @@ svg.selectAll("rect")
       .style("stroke-width", "1px")
       .style("opacity", 1);
   });
-//   svg.selectAll("text")
-//   .data(root.leaves())
-//   .enter().append("text")
-//   .attr("x", d => d.x0 + 5)
-
-//   // Estimate the y position; this may need adjustment
-//   .attr("y", d => (d.y0 + (d.y1 - d.y0) / 2)-20)
-//   .text(d => d.data.name)
-//   .attr("font-size", d => {
-//     // Dynamically adjust font size based on box width, with a minimum and maximum size
-//     const boxWidth = d.x1 - d.x0;
-//     return `${Math.max(9, Math.min(20, boxWidth / 10))}px`; // Example calculation, adjust as needed
-//   })
-//   .attr("fill", "white")
-//   .each(function(d) {
-//     wrap(d3.select(this), d.x1 - d.x0 - 10); // Adjust padding as needed
-//   });
-
-// function wrap(text, width) {
-//   text.each(function() {
-//     var text = d3.select(this),
-//         words = text.text().split(/\s+/).reverse(),
-//         word,
-//         line = [],
-//         lineNumber = 0,
-//         lineHeight = 1.1, // ems
-//         y = text.attr("y"),
-//         dy = 0, // Adjust as needed
-//         tspan = text.text(null).append("tspan").attr("x", text.attr("x")).attr("y", y).attr("dy", dy + "em");
+  
+  svg.selectAll("text")
+  .data(root.leaves())
+  .enter().append("text")
+  .attr("x", d => d.x0 + 5) 
+  
+  .attr("y", d => (d.y0 + (d.y1 - d.y0) / 2))
+  .attr("dy", "0.35em") 
+  .text(d => {
+   
+    if (d.x1 - d.x0 >= 90 && d.y1 - d.y0 >= 90) {
+      return d.data.name;
+    } else if (d.x1 - d.x0 >= 20 && d.y1 - d.y0 >= 20)  {
+      const firstWord = d.data.name.split(" ")[0];
+      return `${firstWord}...`; 
+    }
+    else   {
+      
+      return ; 
+    }
+  })
+  .attr("font-size", d => {
+  
+    const boxWidth = d.x1 - d.x0;
+    return `${Math.max(9, Math.min(20, boxWidth / 10))}px`;
+  })
+  .attr("fill", "white")
+  .style("pointer-events", "none")
+  .each(function(d) {
+  if (d.x1 - d.x0 >= 80 && d.y1 - d.y0 >= 80) {
+    const maxHeight = d.y1 - d.y0; // Total height of the rectangle
+    wrap(d3.select(this), d.x1 - d.x0 - 10, maxHeight); 
+  }
+});
+function wrap(text, width, maxHeight) {
+  text.each(function() {
+    var text = d3.select(this),
+        words = text.text().split(/\s+/).reverse(),
+        word,
+        line = [],
+        lineNumber = 0,
+        lineHeight = 1.1, 
+        fontSize = parseFloat(text.style("font-size")),
+        y = text.attr("y"),
+        dy = 0, 
+        tspan = text.text(null).append("tspan").attr("x", text.attr("x")).attr("y", y).attr("dy", dy + "em");
     
-//     while (word = words.pop()) {
-//       line.push(word);
-//       tspan.text(line.join(" "));
-//       if (tspan.node().getComputedTextLength() > width) {
-//         line.pop();
-//         tspan.text(line.join(" "));
-//         line = [word];
-//         tspan = text.append("tspan").attr("x", text.attr("x")).attr("y", y).attr("dy", `${++lineNumber * lineHeight + dy}em`).text(word);
-//       }
-//     }
-//   });
-// }
+    var textHeight = fontSize; // Initial height of one line of text
+
+    while (word = words.pop()) {
+      line.push(word);
+      tspan.text(line.join(" "));
+      if (tspan.node().getComputedTextLength() > width || textHeight + lineHeight * fontSize > maxHeight - 10) { 
+        line.pop();
+        tspan.text(line.join(" "));
+        line = [word];
+        if (textHeight + lineHeight * fontSize <= maxHeight - 10) { 
+          tspan = text.append("tspan").attr("x", text.attr("x")).attr("y", y)
+                      .attr("dy", `${++lineNumber * lineHeight + dy}em`).text(word);
+          textHeight += lineHeight * fontSize; 
+        }
+      }
+    }
+  });
+}
+
+
+
 
  }
 
@@ -481,26 +507,33 @@ function populateCountryDropdown() {
               country + " <span class='arrow down'></span>";
             currentCountryIndex = countries.indexOf(country);
             updateTreemap(country);
-            // Close the dropdown list
+           
             document.getElementById("countryList").style.display = "none";
           });
           countryListDiv.appendChild(countryOption);
         });
       }
 
-      // Toggle dropdown list visibility
-      document
+ 
+
+        document
         .getElementById("countryDropdown")
         .addEventListener("click", function () {
           var dropdownList = document.getElementById("countryList");
-          dropdownList.style.display =
-            dropdownList.style.display === "none" ? "block" : "none";
+
+          if (dropdownList.style.display === "block") {
+            dropdownList.style.display = "none";
+          } else {
+            dropdownList.style.display =
+              dropdownList.style.display === "none" ||
+              dropdownList.style.display === ""
+                ? "block"
+                : "none";
+          }
         });
 
-      // Call this function to initialize the dropdown with countries
       populateCountryDropdown();
 
-      // Clicking anywhere outside the dropdown should close it
       window.addEventListener("click", function (event) {
         if (!event.target.matches(".dropdown-select")) {
           var dropdowns = document.getElementsByClassName("dropdown-list");
@@ -512,7 +545,7 @@ function populateCountryDropdown() {
           }
         }
       });
-      // Initial display update
+     
       function updateSVGSize() {
     width = window.innerWidth * 1;
     height = window.innerHeight * 0.7;
@@ -524,14 +557,21 @@ function populateCountryDropdown() {
     updateTreemap(currentCountry);
 }
 
-// Add event listener for window resize
 window.addEventListener("resize", updateSVGSize);
 
-// Initial setup and drawing
-updateSVGSize(); // Set initial size and draw the treemap
+updateSVGSize();
 
 populateCountryDropdown();
 updateTreemap(currentCountry); 
     </script>
+
+
+<script>
+  window.addEventListener("message", function (event) {
+    if (event.data === "closeDropdown") {
+      document.querySelector(".dropdown-list").style.display = "none";
+    }
+  });
+</script>
     </body>
   </html>
