@@ -6887,7 +6887,7 @@
               bar
                 .on("mouseover", function (event, d) {
                   // Change the opacity of all other bars
-                  d3.selectAll(".bar").style("opacity", 0.1);
+                  d3.selectAll(".bar").style("opacity", 0.8);
 
                   // Highlight the hovered bar
                   d3.select(this)
@@ -7023,14 +7023,18 @@
           const padding = 10;
           const fontSize = "14px";
           const fontFamily = "Arial, sans-serif";
-          const text = `${country}, ${year}: ${d.category}: ${d.value}%`;
+          const text =
+            `${country}, ${year}: ${d.category}: ${d.value}%`.replace(
+              /_/g,
+              " "
+            );
 
           // Measure the text
           const textSize = measureTextSize(text, fontSize, fontFamily);
 
           // Calculate width and height of the tooltip
-          const tooltipWidth = textSize.width + padding * 2;
-          const tooltipHeight = textSize.height + padding * 2;
+          const tooltipWidth = textSize.width + padding * 1.3;
+          const tooltipHeight = textSize.height + padding * 2; // Adjusted based on text lines
 
           // Remove existing tooltips
           d3.selectAll(".tooltip").remove();
@@ -7044,25 +7048,49 @@
           // Background rectangle
           tooltip
             .append("rect")
-            .attr("x", mouseX - 50)
-            .attr("y", mouseY - 120)
+            .attr("x", mouseX - tooltipWidth / 2)
+            .attr("y", mouseY - tooltipHeight - padding)
             .attr("rx", 5)
             .attr("width", tooltipWidth)
             .attr("height", tooltipHeight)
             .style("fill", "rgba(255, 255, 255, 0.9)")
             .style("stroke", "#ddd")
-            .style("stroke-wid.onth", "1px")
+            .style("stroke-width", "1px")
             .style("filter", "url(#drop-shadow)");
 
-          // Text for the tooltip
-          tooltip
-            .append("text")
-            .attr("x", -50 + mouseX + padding)
-            .attr("y", -120 + mouseY + padding + textSize.height / 2)
-            .style("fill", "#333")
-            .style("font-size", fontSize)
-            .style("font-family", fontFamily)
-            .text(text);
+          // Split text into multiple lines if necessary
+          const words = text.split(" ");
+          const lines = [];
+          let currentLine = words[0];
+
+          for (let i = 1; i < words.length; i++) {
+            const word = words[i];
+            const width = measureTextSize(
+              currentLine + " " + word,
+              fontSize,
+              fontFamily
+            ).width;
+            if (width < tooltipWidth) {
+              currentLine += " " + word;
+            } else {
+              lines.push(currentLine);
+              currentLine = word;
+            }
+          }
+          lines.push(currentLine); // Push the last line into lines
+
+          // Append lines of text to the tooltip
+          lines.forEach((line, i) => {
+            tooltip
+              .append("text")
+              .attr("x", mouseX)
+              .attr("y", mouseY - tooltipHeight - padding + (i + 1) * 20) // Position each line
+              .attr("text-anchor", "middle") // Center the text
+              .style("fill", "#333")
+              .style("font-size", fontSize)
+              .style("font-family", fontFamily)
+              .text(line);
+          });
         }
       }
 
